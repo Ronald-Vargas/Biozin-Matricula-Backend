@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Biozin_Matricula.Utilidades
 {
-    public class Respuesta
+    public class Respuesta<T>
     {
 
         public T ValorRetorno { get; set; }
