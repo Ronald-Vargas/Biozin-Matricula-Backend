@@ -1,12 +1,76 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Biozin_Matricula.Dominio.Entidades
 {
-    internal class Profesor
+    [Table("profesores")]
+    public class Profesor
     {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
+
+        [Column("cedula")]
+        public string Cedula { get; set; } = string.Empty;
+
+        [Column("nombre")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Column("apellido_paterno")]
+        public string ApellidoPaterno { get; set; } = string.Empty;
+
+        [Column("apellido_materno")]
+        public string ApellidoMaterno { get; set; } = string.Empty;
+
+        [Column("fecha_nacimiento")]
+        public DateTime? FechaNacimiento { get; set; }
+
+        [Column("genero")]
+        public string? Genero { get; set; }
+
+        [Column("nacionalidad")]
+        public string? Nacionalidad { get; set; }
+
+        [Column("email_personal")]
+        public string? EmailPersonal { get; set; }
+
+        [Column("telefono")]
+        public string? Telefono { get; set; }
+
+        [Column("titulo")]
+        public string? Titulo { get; set; }
+
+        [Column("especialidad")]
+        public string? Especialidad { get; set; }
+
+        [Column("cursos_asignados")]
+        public string? CursosAsignados { get; set; }
+
+        [Column("provincia")]
+        public string? Provincia { get; set; }
+
+        [Column("canton")]
+        public string? Canton { get; set; }
+
+        [Column("distrito")]
+        public string? Distrito { get; set; }
+
+        [Column("direccion")]
+        public string? Direccion { get; set; }
+
+        [Column("codigo")]
+        public string Codigo { get; set; } = string.Empty;
+
+        [Column("email_institucional")]
+        public string? EmailInstitucional { get; set; }
+
+        [Column("contraseña")]
+        public string Contrasena { get; set; } = string.Empty;
+
+        [Column("fecha_ingreso")]
+        public DateTime? FechaIngreso { get; set; }
+
+        [Column("estado")]
+        public bool Estado { get; set; } = true;
     }
 }

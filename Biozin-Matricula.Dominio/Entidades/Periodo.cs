@@ -1,12 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Biozin_Matricula.Dominio.Entidades
 {
-    internal class Periodo
+    [Table("periodos")]
+    public class Periodo
     {
+        [Key]
+        [Column("id_periodo")]
+        public int IdPeriodo { get; set; }
+
+        [Column("codigo")]
+        public string Codigo { get; set; } = string.Empty;
+
+        [Column("nombre")]
+        public string Nombre { get; set; } = string.Empty;
+
+        [Column("fecha_inicio")]
+        public DateTime FechaInicio { get; set; }
+
+        [Column("fecha_fin")]
+        public DateTime FechaFin { get; set; }
+
+        [Column("fecha_matricula_ini")]
+        public DateTime FechaMatriculaIni { get; set; }
+
+        [Column("fecha_matricula_fin")]
+        public DateTime FechaMatriculaFin { get; set; }
+
+        [Column("estado_matricula")]
+        public bool EstadoMatricula { get; set; } = false;
+
+        [Column("fecha_creacion")]
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 }

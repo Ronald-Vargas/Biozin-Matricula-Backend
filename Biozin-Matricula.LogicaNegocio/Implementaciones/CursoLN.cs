@@ -1,143 +1,155 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AutoMapper;
+using Biozin_Matricula.Dominio.Entidades;
+using Biozin_Matricula.Dominio.EntidadesTipadas;
+using Biozin_Matricula.Dominio.InterfacesAD;
+using Biozin_Matricula.Dominio.InterfacesLN;
+using Biozin_Matricula.Utilidades;
+using Microsoft.Extensions.Logging;
 
 namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 {
-    public class CursoLN : ICategoriaLN
+    public class CursoLN : ICursoLN
     {
-
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
-        private readonly ILogger<ClienteLN> _logger;
+        private readonly ILogger<CursoLN> _logger;
 
-        public ClienteLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<ClienteLN> logger)
+        public CursoLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<CursoLN> logger)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
         }
 
-        public Respuesta<int> Insertar(TCliente cliente)
+        public Respuesta<int> Insertar(TCurso curso)
         {
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.TCliente.ObtenerEntidad(y => y.ClienteId == cliente.ClienteId);
+                var objDatos = _unidadDeTrabajo.Cursos.ObtenerEntidad(y => y.Codigo == curso.Codigo);
                 if (objDatos.ValorRetorno == null)
                 {
-                    var cli = _mapper.Map<Cliente>(cliente);
-                    cli.FechaRegistro = DateTime.UtcNow;
-                    cli.CreadoEn = DateTime.UtcNow;
-                    _unidadDeTrabajo.TCliente.Insertar(cli);
+                    var entidad = _mapper.Map<Curso>(curso);
+                    _unidadDeTrabajo.Cursos.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
                 else
                 {
                     resultado.ValorRetorno = -1;
-                    resultado.strMensajeRespuesta = "El cliente ya se encuentra Registrado";
+                    resultado.strMensajeRespuesta = "El curso ya se encuentra registrado";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error Insertar Cliente: {0}", ex.Message);
+                _logger.LogError("Error Insertar Curso: {0}", ex.Message);
                 resultado.lpError("Error al Insertar", ex.Message);
             }
             return resultado;
         }
 
-        public Respuesta<int> Modificar(TCliente cliente)
+        public Respuesta<int> Modificar(TCurso curso)
         {
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.TCliente.ObtenerEntidad(y => y.ClienteId == cliente.ClienteId);
+                var objDatos = _unidadDeTrabajo.Cursos.ObtenerEntidad(y => y.IdCurso == curso.IdCurso);
                 if (objDatos.ValorRetorno != null)
                 {
-                    objDatos.ValorRetorno.Nombre = cliente.Nombre;
-                    objDatos.ValorRetorno.Email = cliente.Email;
-                    objDatos.ValorRetorno.Telefono = cliente.Telefono;
-                    objDatos.ValorRetorno.Activo = cliente.Activo;
-                    objDatos.ValorRetorno.TipoCedula = cliente.TipoCedula;
-                    objDatos.ValorRetorno.ActualizadoEn = DateTime.UtcNow;
-                    objDatos.ValorRetorno.ActualizadoPor = cliente.ActualizadoPor;
-                    _unidadDeTrabajo.TCliente.Modificar(objDatos.ValorRetorno);
+                    objDatos.ValorRetorno.Codigo = curso.Codigo;
+                    objDatos.ValorRetorno.Creditos = curso.Creditos;
+                    objDatos.ValorRetorno.Nombre = curso.Nombre;
+                    objDatos.ValorRetorno.Descripcion = curso.Descripcion;
+                    objDatos.ValorRetorno.Estado = curso.Estado;
+                    _unidadDeTrabajo.Cursos.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
                 else
                 {
                     resultado.ValorRetorno = -1;
-                    resultado.strMensajeRespuesta = "El cliente no existe";
+                    resultado.strMensajeRespuesta = "El curso no existe";
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error Modificar Cliente: {0}", ex.Message);
+                _logger.LogError("Error Modificar Curso: {0}", ex.Message);
                 resultado.lpError("Error al Modificar", ex.Message);
             }
             return resultado;
         }
 
-        public Respuesta<bool> Eliminar(TCliente cliente)
+        public Respuesta<bool> Eliminar(TCurso curso)
         {
             var resultado = new Respuesta<bool>();
             try
             {
-                var objDatos = _unidadDeTrabajo.TCliente.ObtenerEntidad(y => y.ClienteId == cliente.ClienteId);
+                var objDatos = _unidadDeTrabajo.Cursos.ObtenerEntidad(y => y.IdCurso == curso.IdCurso);
                 if (objDatos.ValorRetorno != null)
                 {
-                    _unidadDeTrabajo.TCliente.Eliminar(objDatos.ValorRetorno);
+                    _unidadDeTrabajo.Cursos.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;
                 }
-                else { resultado.ValorRetorno = false; resultado.strMensajeRespuesta = "No existe"; }
+                else
+                {
+                    resultado.ValorRetorno = false;
+                    resultado.strMensajeRespuesta = "El curso no existe";
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error Eliminar Cliente: {0}", ex.Message);
+                _logger.LogError("Error Eliminar Curso: {0}", ex.Message);
                 resultado.lpError("Error al Eliminar", ex.Message);
             }
             return resultado;
         }
 
-        public Respuesta<IEnumerable<TCliente>> Obtener(TCliente clase)
+        public Respuesta<IEnumerable<TCurso>> Obtener(TCurso curso)
         {
-            var resultado = new Respuesta<IEnumerable<TCliente>>();
+            var resultado = new Respuesta<IEnumerable<TCurso>>();
             try
             {
-                var datos = _unidadDeTrabajo.TCliente.ObtenerEntidades(x =>
-                    (string.IsNullOrEmpty(clase.Nombre) || x.Nombre.Contains(clase.Nombre)));
-                resultado.ValorRetorno = _mapper.Map<IEnumerable<TCliente>>(datos.ValorRetorno);
+                var datos = _unidadDeTrabajo.Cursos.ObtenerEntidades(x =>
+                    (string.IsNullOrEmpty(curso.Nombre) || x.Nombre.Contains(curso.Nombre)));
+                resultado.ValorRetorno = _mapper.Map<IEnumerable<TCurso>>(datos.ValorRetorno);
             }
-            catch (Exception ex) { _logger.LogError(ex.Message); resultado.lpError("Error", ex.Message); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
             return resultado;
         }
 
-        public Respuesta<TCliente> Buscar(TCliente clase)
+        public Respuesta<TCurso> Buscar(TCurso curso)
         {
-            var resultado = new Respuesta<TCliente>();
+            var resultado = new Respuesta<TCurso>();
             try
             {
-                var datos = _unidadDeTrabajo.TCliente.ObtenerEntidad(x => x.ClienteId == clase.ClienteId);
-                resultado.ValorRetorno = _mapper.Map<TCliente>(datos.ValorRetorno);
+                var datos = _unidadDeTrabajo.Cursos.ObtenerEntidad(x => x.IdCurso == curso.IdCurso);
+                resultado.ValorRetorno = _mapper.Map<TCurso>(datos.ValorRetorno);
             }
-            catch (Exception ex) { _logger.LogError(ex.Message); resultado.lpError("Error", ex.Message); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
             return resultado;
         }
 
-        public Respuesta<IEnumerable<TCliente>> Listar()
+        public Respuesta<IEnumerable<TCurso>> Listar()
         {
-            var resultado = new Respuesta<IEnumerable<TCliente>>();
+            var resultado = new Respuesta<IEnumerable<TCurso>>();
             try
             {
-                var datos = _unidadDeTrabajo.TCliente.Listar();
-                resultado.ValorRetorno = _mapper.Map<IEnumerable<TCliente>>(datos.ValorRetorno);
+                var datos = _unidadDeTrabajo.Cursos.Listar();
+                resultado.ValorRetorno = _mapper.Map<IEnumerable<TCurso>>(datos.ValorRetorno);
             }
-            catch (Exception ex) { _logger.LogError(ex.Message); resultado.lpError("Error", ex.Message); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
             return resultado;
         }
-
     }
 }

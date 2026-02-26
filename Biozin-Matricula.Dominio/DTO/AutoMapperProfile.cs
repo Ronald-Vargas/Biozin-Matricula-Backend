@@ -1,12 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using AutoMapper;
+using Biozin_Matricula.Dominio.Entidades;
+using Biozin_Matricula.Dominio.EntidadesTipadas;
 
 namespace Biozin_Matricula.Dominio.DTO
 {
-    internal class AutoMapperProfile
+    public class AutoMapperProfile : Profile
     {
+        public AutoMapperProfile()
+        {
+            CreateMap<Curso, TCurso>().ReverseMap();
+            CreateMap<Carrera, TCarrera>().ReverseMap();
+            CreateMap<Profesor, TProfesor>().ReverseMap();
+            CreateMap<Periodo, TPeriodo>().ReverseMap();
+            CreateMap<Estudiante, TEstudiante>().ReverseMap();
+            CreateMap<OfertaAcademica, TOfertaAcademica>().ReverseMap();
+            CreateMap<CarreraCurso, TCarreraCurso>().ReverseMap();
+        }
     }
 }

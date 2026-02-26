@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Biozin_Matricula.Dominio.EntidadesTipadas;
+using Biozin_Matricula.Utilidades;
 
 namespace Biozin_Matricula.Dominio.InterfacesLN
 {
-    internal interface IProfesorLN
+    public interface IProfesorLN
     {
+        Respuesta<int> Insertar(TProfesor profesor);
+        Respuesta<int> Modificar(TProfesor profesor);
+        Respuesta<bool> Eliminar(TProfesor profesor);
+        Respuesta<IEnumerable<TProfesor>> Obtener(TProfesor profesor);
+        Respuesta<TProfesor> Buscar(TProfesor profesor);
+        Respuesta<IEnumerable<TProfesor>> Listar();
     }
 }

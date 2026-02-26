@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Linq.Expressions;
+using Biozin_Matricula.Utilidades;
 
 namespace Biozin_Matricula.Dominio.InterfacesAD
 {
-    internal interface IRepositorioAD
+    public interface IRepositorioAD<T> where T : class
     {
+        Respuesta<T> ObtenerEntidad(Expression<Func<T, bool>> filtro);
+        Respuesta<IEnumerable<T>> ObtenerEntidades(Expression<Func<T, bool>> filtro);
+        Respuesta<IEnumerable<T>> Listar();
+        void Insertar(T entidad);
+        void Modificar(T entidad);
+        void Eliminar(T entidad);
     }
 }
