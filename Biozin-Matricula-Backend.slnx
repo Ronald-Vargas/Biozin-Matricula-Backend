@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Biozin-Matricula.AccesoDatos/Biozin-Matricula.AccesoDatos.csproj" />
+  <Project Path="Biozin-Matricula.API/Biozin-Matricula.API.csproj" />
+  <Project Path="Biozin-Matricula.Dominio/Biozin-Matricula.Dominio.csproj" />
+  <Project Path="Biozin-Matricula.LogicaNegocio/Biozin-Matricula.LogicaNegocio.csproj" />
+  <Project Path="Biozin-Matricula.Utilidades/Biozin-Matricula.Utilidades.csproj" />
+</Solution>

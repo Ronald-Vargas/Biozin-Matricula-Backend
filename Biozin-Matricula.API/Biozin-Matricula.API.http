@@ -1,0 +1,6 @@
+@Biozin_Matricula.API_HostAddress = http://localhost:5098
+
+GET {{Biozin_Matricula.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
