@@ -10,9 +10,6 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("id_periodo")]
         public int IdPeriodo { get; set; }
 
-        [Column("codigo")]
-        public string Codigo { get; set; } = string.Empty;
-
         [Column("nombre")]
         public string Nombre { get; set; } = string.Empty;
 
@@ -23,7 +20,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public DateTime FechaFin { get; set; }
 
         [Column("fecha_matricula_ini")]
-        public DateTime FechaMatriculaIni { get; set; }
+        public DateTime FechaMatriculaInicio { get; set; }
 
         [Column("fecha_matricula_fin")]
         public DateTime FechaMatriculaFin { get; set; }
@@ -31,7 +28,5 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("estado_matricula")]
         public bool EstadoMatricula { get; set; } = false;
 
-        [Column("fecha_creacion")]
-        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     }
 }

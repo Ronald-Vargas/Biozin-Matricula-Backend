@@ -26,11 +26,10 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.Codigo == periodo.Codigo);
+                var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.IdPeriodo == periodo.IdPeriodo);
                 if (objDatos.ValorRetorno == null)
                 {
                     var entidad = _mapper.Map<Periodo>(periodo);
-                    entidad.FechaCreacion = DateTime.UtcNow;
                     _unidadDeTrabajo.Periodos.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
@@ -56,11 +55,10 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.IdPeriodo == periodo.IdPeriodo);
                 if (objDatos.ValorRetorno != null)
                 {
-                    objDatos.ValorRetorno.Codigo = periodo.Codigo;
                     objDatos.ValorRetorno.Nombre = periodo.Nombre;
                     objDatos.ValorRetorno.FechaInicio = periodo.FechaInicio;
                     objDatos.ValorRetorno.FechaFin = periodo.FechaFin;
-                    objDatos.ValorRetorno.FechaMatriculaIni = periodo.FechaMatriculaIni;
+                    objDatos.ValorRetorno.FechaMatriculaInicio = periodo.FechaMatriculaInicio;
                     objDatos.ValorRetorno.FechaMatriculaFin = periodo.FechaMatriculaFin;
                     objDatos.ValorRetorno.EstadoMatricula = periodo.EstadoMatricula;
                     _unidadDeTrabajo.Periodos.Modificar(objDatos.ValorRetorno);
