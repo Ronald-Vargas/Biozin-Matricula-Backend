@@ -1,4 +1,5 @@
 using AutoMapper;
+using BCrypt.Net;
 using Biozin_Matricula.Dominio.Entidades;
 using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
@@ -21,22 +22,45 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             _logger = logger;
         }
 
-        public Respuesta<int> Insertar(TProfesor profesor)
+        public Respuesta<TCredencialesProfesor> Insertar(TProfesor profesor)
         {
-            var resultado = new Respuesta<int>();
+            var resultado = new Respuesta<TCredencialesProfesor>();
             try
             {
                 var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.Cedula == profesor.Cedula);
                 if (objDatos.ValorRetorno == null)
                 {
+                    // Generar email institucional con manejo de colisiones
+                    var baseEmail = GeneradorCredenciales.GenerarBaseEmail(profesor.Nombre, profesor.ApellidoPaterno);
+                    var email = GeneradorCredenciales.ConstruirEmail(baseEmail);
+                    int sufijo = 2;
+                    while (_unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.EmailInstitucional == email).ValorRetorno != null)
+                    {
+                        email = GeneradorCredenciales.ConstruirEmail(baseEmail, sufijo);
+                        sufijo++;
+                    }
+
+                    // Generar contraseña y hashear
+                    var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
+                    var contrasenaHash = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
+
                     var entidad = _mapper.Map<Profesor>(profesor);
+                    entidad.EmailInstitucional = email;
+                    entidad.Contrasena = contrasenaHash;
                     entidad.FechaIngreso = DateTime.UtcNow;
+
                     _unidadDeTrabajo.Profesores.Insertar(entidad);
-                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                    _unidadDeTrabajo.Completar();
+
+                    resultado.ValorRetorno = new TCredencialesProfesor
+                    {
+                        IdProfesor = entidad.IdProfesor,
+                        EmailInstitucional = email,
+                        ContrasenaGenerada = contrasenaTxt
+                    };
                 }
                 else
                 {
-                    resultado.ValorRetorno = -1;
                     resultado.strMensajeRespuesta = "El profesor ya se encuentra registrado";
                 }
             }
@@ -53,7 +77,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.Id == profesor.Id);
+                var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.IdProfesor == profesor.IdProfesor);
                 if (objDatos.ValorRetorno != null)
                 {
                     objDatos.ValorRetorno.Cedula = profesor.Cedula;
@@ -72,7 +96,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.Canton = profesor.Canton;
                     objDatos.ValorRetorno.Distrito = profesor.Distrito;
                     objDatos.ValorRetorno.Direccion = profesor.Direccion;
-                    objDatos.ValorRetorno.Codigo = profesor.Codigo;
                     objDatos.ValorRetorno.EmailInstitucional = profesor.EmailInstitucional;
                     objDatos.ValorRetorno.Estado = profesor.Estado;
                     _unidadDeTrabajo.Profesores.Modificar(objDatos.ValorRetorno);
@@ -97,7 +120,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<bool>();
             try
             {
-                var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.Id == profesor.Id);
+                var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.IdProfesor == profesor.IdProfesor);
                 if (objDatos.ValorRetorno != null)
                 {
                     _unidadDeTrabajo.Profesores.Eliminar(objDatos.ValorRetorno);
@@ -140,7 +163,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<TProfesor>();
             try
             {
-                var datos = _unidadDeTrabajo.Profesores.ObtenerEntidad(x => x.Id == profesor.Id);
+                var datos = _unidadDeTrabajo.Profesores.ObtenerEntidad(x => x.IdProfesor == profesor.IdProfesor);
                 resultado.ValorRetorno = _mapper.Map<TProfesor>(datos.ValorRetorno);
             }
             catch (Exception ex)

@@ -8,7 +8,7 @@ namespace Biozin_Matricula.Dominio.Entidades
     {
         [Key]
         [Column("id")]
-        public int Id { get; set; }
+        public int IdProfesor { get; set; }
 
         [Column("cedula")]
         public string Cedula { get; set; } = string.Empty;
@@ -44,7 +44,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public string? Especialidad { get; set; }
 
         [Column("cursos_asignados")]
-        public string? CursosAsignados { get; set; }
+        public int? CursosAsignados { get; set; }
 
         [Column("provincia")]
         public string? Provincia { get; set; }
@@ -57,9 +57,6 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("direccion")]
         public string? Direccion { get; set; }
-
-        [Column("codigo")]
-        public string Codigo { get; set; } = string.Empty;
 
         [Column("email_institucional")]
         public string? EmailInstitucional { get; set; }
