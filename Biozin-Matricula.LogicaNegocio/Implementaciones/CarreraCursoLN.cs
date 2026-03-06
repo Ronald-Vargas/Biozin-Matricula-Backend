@@ -54,12 +54,13 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             try
             {
                 var existentes = _unidadDeTrabajo.CarreraCursos.ObtenerEntidades(y => y.IdCarrera == idCarrera);
-                if (existentes.ValorRetorno != null)
+                if (existentes.ValorRetorno != null && existentes.ValorRetorno.Any())
                 {
                     foreach (var existente in existentes.ValorRetorno)
                     {
                         _unidadDeTrabajo.CarreraCursos.Eliminar(existente);
                     }
+                    _unidadDeTrabajo.Completar();
                 }
 
                 foreach (var asignacion in asignaciones)
