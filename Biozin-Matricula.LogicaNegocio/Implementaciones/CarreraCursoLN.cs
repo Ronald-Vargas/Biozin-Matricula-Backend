@@ -48,6 +48,37 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        public Respuesta<int> InsertarMultiple(int idCarrera, IEnumerable<TCarreraCurso> asignaciones)
+        {
+            var resultado = new Respuesta<int>();
+            try
+            {
+                var existentes = _unidadDeTrabajo.CarreraCursos.ObtenerEntidades(y => y.IdCarrera == idCarrera);
+                if (existentes.ValorRetorno != null)
+                {
+                    foreach (var existente in existentes.ValorRetorno)
+                    {
+                        _unidadDeTrabajo.CarreraCursos.Eliminar(existente);
+                    }
+                }
+
+                foreach (var asignacion in asignaciones)
+                {
+                    asignacion.IdCarrera = idCarrera;
+                    var entidad = _mapper.Map<CarreraCurso>(asignacion);
+                    _unidadDeTrabajo.CarreraCursos.Insertar(entidad);
+                }
+
+                resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error InsertarMultiple CarreraCurso: {0}", ex.Message);
+                resultado.lpError("Error al Insertar Multiple", ex.Message);
+            }
+            return resultado;
+        }
+
         public Respuesta<int> Modificar(TCarreraCurso carreraCurso)
         {
             var resultado = new Respuesta<int>();
@@ -99,6 +130,35 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 _logger.LogError("Error Eliminar CarreraCurso: {0}", ex.Message);
                 resultado.lpError("Error al Eliminar", ex.Message);
+            }
+            return resultado;
+        }
+
+        public Respuesta<bool> EliminarPorCarrera(int idCarrera)
+        {
+            var resultado = new Respuesta<bool>();
+            try
+            {
+                var existentes = _unidadDeTrabajo.CarreraCursos.ObtenerEntidades(y => y.IdCarrera == idCarrera);
+                if (existentes.ValorRetorno != null && existentes.ValorRetorno.Any())
+                {
+                    foreach (var existente in existentes.ValorRetorno)
+                    {
+                        _unidadDeTrabajo.CarreraCursos.Eliminar(existente);
+                    }
+                    _unidadDeTrabajo.Completar();
+                    resultado.ValorRetorno = true;
+                }
+                else
+                {
+                    resultado.ValorRetorno = false;
+                    resultado.strMensajeRespuesta = "No se encontraron asignaciones para la carrera";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error EliminarPorCarrera CarreraCurso: {0}", ex.Message);
+                resultado.lpError("Error al Eliminar por Carrera", ex.Message);
             }
             return resultado;
         }
