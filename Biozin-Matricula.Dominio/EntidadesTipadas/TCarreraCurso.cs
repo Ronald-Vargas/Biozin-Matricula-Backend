@@ -6,6 +6,5 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public int IdCarrera { get; set; }
         public int IdCurso { get; set; }
         public int Semestre { get; set; }
-        public bool EsObligatorio { get; set; } = true;
     }
 }

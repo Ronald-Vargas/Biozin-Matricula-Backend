@@ -5,11 +5,15 @@ namespace Biozin_Matricula.Utilidades
     public static class GeneradorCredenciales
     {
         private const string Dominio = "@biozin.edu.cr";
+        private const string DominioEstudiante = "@est.biozin.edu.cr";
 
         private static readonly char[] Minusculas = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
         private static readonly char[] Mayusculas = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
         private static readonly char[] Digitos = "0123456789".ToCharArray();
         private static readonly char[] Especiales = "!@#$%&*".ToCharArray();
+
+
+
 
         /// <summary>
         /// Genera la parte local del email a partir del nombre y apellido paterno.
@@ -22,13 +26,32 @@ namespace Biozin_Matricula.Utilidades
         }
 
         /// <summary>
-        /// Construye el email completo con el dominio institucional.
+        /// Construye el email completo con el dominio institucional de profesores.
         /// Si sufijo > 0, lo agrega al final: "juan.perez2@biozin.edu.cr"
         /// </summary>
         public static string ConstruirEmail(string baseEmail, int sufijo = 0)
         {
             var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
             return $"{local}{Dominio}";
+        }
+
+        /// <summary>
+        /// Construye el email completo con el dominio institucional de estudiantes.
+        /// Si sufijo > 0, lo agrega al final: "juan.perez2@est.biozin.edu.cr"
+        /// </summary>
+        public static string ConstruirEmailEstudiante(string baseEmail, int sufijo = 0)
+        {
+            var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
+            return $"{local}{DominioEstudiante}";
+        }
+
+        /// <summary>
+        /// Genera un carnet con formato AÑOxxxxx (ej: 202600123).
+        /// </summary>
+        public static long GenerarCarnet(int anio)
+        {
+            var rng = new Random();
+            return (long)anio * 100000 + rng.Next(1, 99999);
         }
 
         /// <summary>

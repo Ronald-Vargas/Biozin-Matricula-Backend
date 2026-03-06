@@ -10,8 +10,8 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("id_estudiante")]
         public int IdEstudiante { get; set; }
 
-        [Column("codigo_estudiante")]
-        public string CodigoEstudiante { get; set; } = string.Empty;
+        [Column("carnet")]
+        public long carnet { get; set; }
 
         [Column("cedula")]
         public string Cedula { get; set; } = string.Empty;

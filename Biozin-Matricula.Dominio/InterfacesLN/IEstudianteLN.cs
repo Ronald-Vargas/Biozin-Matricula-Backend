@@ -5,7 +5,7 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
 {
     public interface IEstudianteLN
     {
-        Respuesta<int> Insertar(TEstudiante estudiante);
+        Respuesta<TCredencialesEstudiante> Insertar(TEstudiante estudiante);
         Respuesta<int> Modificar(TEstudiante estudiante);
         Respuesta<bool> Eliminar(TEstudiante estudiante);
         Respuesta<IEnumerable<TEstudiante>> Obtener(TEstudiante estudiante);

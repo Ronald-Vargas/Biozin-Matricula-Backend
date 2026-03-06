@@ -90,7 +90,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.IdCarrera = carreraCurso.IdCarrera;
                     objDatos.ValorRetorno.IdCurso = carreraCurso.IdCurso;
                     objDatos.ValorRetorno.Semestre = carreraCurso.Semestre;
-                    objDatos.ValorRetorno.EsObligatorio = carreraCurso.EsObligatorio;
                     _unidadDeTrabajo.CarreraCursos.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }

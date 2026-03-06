@@ -1,9 +1,7 @@
 namespace Biozin_Matricula.Dominio.EntidadesTipadas
 {
-    public class TEstudiante
-    {
+    public class TEstudiante {
         public int IdEstudiante { get; set; }
-        public string CodigoEstudiante { get; set; } = string.Empty;
         public string Cedula { get; set; } = string.Empty;
         public string Nombre { get; set; } = string.Empty;
         public string ApellidoPaterno { get; set; } = string.Empty;
@@ -35,5 +33,8 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public bool? NecesitaAsistencia { get; set; }
         public string? Observaciones { get; set; }
         public string Contrasena { get; set; } = string.Empty;
+
+        public long carnet { get; set; } 
+
     }
 }

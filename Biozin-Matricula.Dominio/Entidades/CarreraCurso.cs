@@ -25,7 +25,5 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("semestre")]
         public int Semestre { get; set; }
 
-        [Column("es_obligatorio")]
-        public bool EsObligatorio { get; set; } = true;
     }
 }

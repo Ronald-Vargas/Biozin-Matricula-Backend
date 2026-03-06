@@ -1,4 +1,5 @@
 using AutoMapper;
+using BCrypt.Net;
 using Biozin_Matricula.Dominio.Entidades;
 using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
@@ -21,22 +22,54 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             _logger = logger;
         }
 
-        public Respuesta<int> Insertar(TEstudiante estudiante)
+        public Respuesta<TCredencialesEstudiante> Insertar(TEstudiante estudiante)
         {
-            var resultado = new Respuesta<int>();
+            var resultado = new Respuesta<TCredencialesEstudiante>();
             try
             {
                 var objDatos = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.Cedula == estudiante.Cedula);
                 if (objDatos.ValorRetorno == null)
                 {
+                    // Generar email institucional con manejo de colisiones
+                    var baseEmail = GeneradorCredenciales.GenerarBaseEmail(estudiante.Nombre, estudiante.ApellidoPaterno);
+                    var email = GeneradorCredenciales.ConstruirEmailEstudiante(baseEmail);
+                    int sufijo = 2;
+                    while (_unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.EmailInstitucional == email).ValorRetorno != null)
+                    {
+                        email = GeneradorCredenciales.ConstruirEmailEstudiante(baseEmail, sufijo);
+                        sufijo++;
+                    }
+
+                    // Generar carnet único
+                    var carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
+                    while (_unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.carnet == carnet).ValorRetorno != null)
+                    {
+                        carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
+                    }
+
+                    // Generar contraseña y hashear
+                    var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
+                    var contrasenaHash = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
+
                     var entidad = _mapper.Map<Estudiante>(estudiante);
+                    entidad.EmailInstitucional = email;
+                    entidad.carnet = carnet;
+                    entidad.Contrasena = contrasenaHash;
                     entidad.FechaIngreso = DateTime.UtcNow;
+
                     _unidadDeTrabajo.Estudiantes.Insertar(entidad);
-                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                    _unidadDeTrabajo.Completar();
+
+                    resultado.ValorRetorno = new TCredencialesEstudiante
+                    {
+                        IdEstudiante = entidad.IdEstudiante,
+                        Carnet = carnet,
+                        EmailInstitucional = email,
+                        ContrasenaGenerada = contrasenaTxt
+                    };
                 }
                 else
                 {
-                    resultado.ValorRetorno = -1;
                     resultado.strMensajeRespuesta = "El estudiante ya se encuentra registrado";
                 }
             }
@@ -56,7 +89,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.IdEstudiante == estudiante.IdEstudiante);
                 if (objDatos.ValorRetorno != null)
                 {
-                    objDatos.ValorRetorno.CodigoEstudiante = estudiante.CodigoEstudiante;
                     objDatos.ValorRetorno.Cedula = estudiante.Cedula;
                     objDatos.ValorRetorno.Nombre = estudiante.Nombre;
                     objDatos.ValorRetorno.ApellidoPaterno = estudiante.ApellidoPaterno;

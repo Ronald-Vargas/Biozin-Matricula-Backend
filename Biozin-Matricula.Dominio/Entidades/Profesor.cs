@@ -68,6 +68,6 @@ namespace Biozin_Matricula.Dominio.Entidades
         public DateTime? FechaIngreso { get; set; }
 
         [Column("estado")]
-        public bool Estado { get; set; } = true;
+        public string Estado { get; set; } 
     }
 }

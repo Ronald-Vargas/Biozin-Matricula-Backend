@@ -19,8 +19,8 @@ namespace Biozin_Matricula.API.Controladores
         [HttpPut("Modificar")]
         public IActionResult Modificar([FromBody] TProfesor obj) => Ok(_ln.Modificar(obj));
 
-        [HttpDelete("Eliminar")]
-        public IActionResult Eliminar([FromBody] TProfesor obj) => Ok(_ln.Eliminar(obj));
+        [HttpDelete("Eliminar/{id}")]
+        public IActionResult Eliminar(int id) => Ok(_ln.Eliminar(new TProfesor { IdProfesor = id }));
 
         [HttpPost("Obtener")]
         public IActionResult Obtener([FromBody] TProfesor obj) => Ok(_ln.Obtener(obj));
