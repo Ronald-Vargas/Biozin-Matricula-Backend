@@ -24,5 +24,14 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("estado")]
         public bool Estado { get; set; } = true;
+
+        [Column("precio")]
+        public decimal Precio { get; set; }
+
+        [Column("tiene_laboratorio")]
+        public bool TieneLaboratorio { get; set; }
+
+        [Column("precio_laboratorio")]
+        public decimal PrecioLaboratorio { get; set; }
     }
 }
