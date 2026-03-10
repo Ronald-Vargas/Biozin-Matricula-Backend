@@ -22,6 +22,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string? EmailInstitucional { get; set; }
         public string Contrasena { get; set; } = string.Empty;
         public DateTime? FechaIngreso { get; set; }
-        public string Estado { get; set; }
+        public bool Estado { get; set; }
     }
 }
