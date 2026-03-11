@@ -21,7 +21,7 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public int? IdCarrera { get; set; }
         public DateTime? FechaIngreso { get; set; }
         public int? SemestreActual { get; set; }
-        public string? EstadoEstudiante { get; set; }
+        public bool? EstadoEstudiante { get; set; }
         public string? TipoBeca { get; set; }
         public string? CondicionSocioeconomica { get; set; }
         public bool? Trabaja { get; set; }

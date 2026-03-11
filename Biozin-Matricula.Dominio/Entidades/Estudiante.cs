@@ -74,7 +74,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public int? SemestreActual { get; set; }
 
         [Column("estado_estudiante")]
-        public string? EstadoEstudiante { get; set; }
+        public bool? EstadoEstudiante { get; set; }
 
         [Column("tipo_beca")]
         public string? TipoBeca { get; set; }
