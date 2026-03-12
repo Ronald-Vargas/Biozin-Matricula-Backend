@@ -25,6 +25,10 @@ namespace Biozin_Matricula.API.Controladores
         [HttpGet("Listar")]
         public IActionResult Listar() => Ok(_ln.Listar());
 
+
+        [HttpPost("Insertar")]
+        public IActionResult Insertar([FromBody] TAjustes obj) => Ok(_ln.Insertar(obj));
+
     }
 }
 

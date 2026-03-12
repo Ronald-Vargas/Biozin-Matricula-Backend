@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Biozin_Matricula.Dominio.Entidades;
 using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
 using Biozin_Matricula.Dominio.InterfacesLN;
@@ -26,6 +27,40 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             _mapper = mapper;
             _logger = logger;
         }
+
+
+
+
+
+        public Respuesta<int> Insertar(TAjustes ajustes)
+        {
+            var resultado = new Respuesta<int>();
+            try
+            {
+                var objDatos = _unidadDeTrabajo.Ajustes.ObtenerEntidad(y => y.idAjuste == ajustes.idAjuste);
+                if (objDatos.ValorRetorno == null)
+                {
+                    var entidad = _mapper.Map<Ajustes>(ajustes);
+                    _unidadDeTrabajo.Ajustes.Insertar(entidad);
+                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                }
+                else
+                {
+                    resultado.ValorRetorno = -1;
+                    resultado.strMensajeRespuesta = "Los ajustes ya se encuentran registrados";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Insertar Ajustes: {0}", ex.Message);
+                resultado.lpError("Error al Insertar", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
 
         public Respuesta<int> Modificar(TAjustes ajustes)
         {
