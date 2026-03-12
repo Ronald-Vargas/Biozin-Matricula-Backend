@@ -16,6 +16,7 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<Estudiante> Estudiantes { get; set; }
         public DbSet<OfertaAcademica> OfertasAcademicas { get; set; }
         public DbSet<CarreraCurso> CarreraCursos { get; set; }
+        public DbSet<Ajustes> Ajustes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +55,7 @@ namespace Biozin_Matricula.AccesoDatos
             modelBuilder.Entity<OfertaAcademica>()
                 .Property(o => o.Precio)
                 .HasColumnType("decimal(18,2)");
+
         }
     }
 }

@@ -15,49 +15,38 @@ namespace Biozin_Matricula.Utilidades
 
 
 
-        /// <summary>
         /// Genera la parte local del email a partir del nombre y apellido paterno.
-        /// Ej: "Juan Carlos", "Pérez" → "juan.perez"
-        /// </summary>
         public static string GenerarBaseEmail(string nombre, string apellidoPaterno)
         {
             var primerNombre = nombre.Trim().Split(' ')[0];
             return $"{Normalizar(primerNombre)}.{Normalizar(apellidoPaterno)}";
         }
 
-        /// <summary>
         /// Construye el email completo con el dominio institucional de profesores.
         /// Si sufijo > 0, lo agrega al final: "juan.perez2@biozin.edu.cr"
-        /// </summary>
         public static string ConstruirEmail(string baseEmail, int sufijo = 0)
         {
             var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
             return $"{local}{Dominio}";
         }
 
-        /// <summary>
         /// Construye el email completo con el dominio institucional de estudiantes.
         /// Si sufijo > 0, lo agrega al final: "juan.perez2@est.biozin.edu.cr"
-        /// </summary>
         public static string ConstruirEmailEstudiante(string baseEmail, int sufijo = 0)
         {
             var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
             return $"{local}{DominioEstudiante}";
         }
 
-        /// <summary>
         /// Genera un carnet con formato AÑOxxxxx (ej: 202600123).
-        /// </summary>
         public static long GenerarCarnet(int anio)
         {
             var rng = new Random();
             return (long)anio * 100000 + rng.Next(1, 99999);
         }
 
-        /// <summary>
         /// Genera una contraseña aleatoria de 10 caracteres con mayúscula,
         /// minúscula, dígito y carácter especial garantizados.
-        /// </summary>
         public static string GenerarContrasena()
         {
             var rng = new Random();
