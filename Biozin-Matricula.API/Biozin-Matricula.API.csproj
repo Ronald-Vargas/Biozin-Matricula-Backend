@@ -17,6 +17,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="PlantillasEmail\Biozin_logo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="PlantillasEmail\credenciales.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Biozin-Matricula.AccesoDatos\Biozin-Matricula.AccesoDatos.csproj" />
     <ProjectReference Include="..\Biozin-Matricula.Dominio\Biozin-Matricula.Dominio.csproj" />
     <ProjectReference Include="..\Biozin-Matricula.LogicaNegocio\Biozin-Matricula.LogicaNegocio.csproj" />

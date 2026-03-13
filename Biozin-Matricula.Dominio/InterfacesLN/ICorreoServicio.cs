@@ -14,7 +14,9 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         string nombre,
         long carnet,
         string correoInstitucional,
-        string password
+        string password,
+        string nombreUniversidad,
+        string correoRemitente
     );
 
     }

@@ -20,13 +20,15 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             string nombre,
             long carnet,
             string correoInstitucional,
-            string password)
+            string password,
+            string nombreUniversidad,
+            string correoRemitente)
         {
             var mensaje = new MimeMessage();
 
             mensaje.From.Add(new MailboxAddress(
-                _config["Mail:NombreRemitente"],
-                _config["Mail:Remitente"]
+                nombreUniversidad,
+                correoRemitente
             ));
 
             mensaje.To.Add(MailboxAddress.Parse(correoDestino));
@@ -43,12 +45,25 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
             string html = File.ReadAllText(ruta);
 
+            var rutaLogo = Path.Combine(Directory.GetCurrentDirectory(), "PlantillasEmail", "Biozin_logo.png");
+            if (File.Exists(rutaLogo))
+            {
+                var imagen = builder.LinkedResources.Add(rutaLogo);
+                imagen.ContentId = "logo-universidad";
+                html = html.Replace("{logoUrl}", $"cid:{imagen.ContentId}");
+            }
+            else
+            {
+                html = html.Replace("{logoUrl}", string.Empty);
+            }
+
             html = html.Replace("{nombre}", nombre);
             html = html.Replace("{carnet}", carnet.ToString());
             html = html.Replace("{correoInstitucional}", correoInstitucional);
             html = html.Replace("{password}", password);
             html = html.Replace("{urlCampus}", "https://campus.biozin.edu");
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
+            html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 
             builder.HtmlBody = html;
 
