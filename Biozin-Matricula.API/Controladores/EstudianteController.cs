@@ -14,7 +14,7 @@ namespace Biozin_Matricula.API.Controladores
         public EstudianteController(IEstudianteLN ln) => _ln = ln;
 
         [HttpPost("Insertar")]
-        public IActionResult Insertar([FromBody] TEstudiante obj) => Ok(_ln.Insertar(obj));
+        public async Task<IActionResult> Insertar([FromBody] TEstudiante obj) => Ok(await _ln.Insertar(obj));
 
         [HttpPut("Modificar")]
         public IActionResult Modificar([FromBody] TEstudiante obj) => Ok(_ln.Modificar(obj));
@@ -30,6 +30,9 @@ namespace Biozin_Matricula.API.Controladores
 
         [HttpGet("Listar")]
         public IActionResult Listar() => Ok(_ln.Listar());
+
+
+
 
     }
 }

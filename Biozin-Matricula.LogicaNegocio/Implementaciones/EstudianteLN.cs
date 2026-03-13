@@ -14,15 +14,17 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
         private readonly ILogger<EstudianteLN> _logger;
+        private readonly ICorreoServicio _correo;
 
-        public EstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<EstudianteLN> logger)
+        public EstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<EstudianteLN> logger, ICorreoServicio correo  )
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
+            _correo = correo;
         }
 
-        public Respuesta<TCredencialesEstudiante> Insertar(TEstudiante estudiante)
+        public async Task<Respuesta<TCredencialesEstudiante>> Insertar(TEstudiante estudiante)
         {
             var resultado = new Respuesta<TCredencialesEstudiante>();
             try
@@ -59,6 +61,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     _unidadDeTrabajo.Estudiantes.Insertar(entidad);
                     _unidadDeTrabajo.Completar();
+
+                    await _correo.EnviarCredencialesAsync(
+                        estudiante.EmailPersonal,        
+                        estudiante.Nombre,
+                        carnet,
+                        email,
+                        contrasenaTxt
+                    );
 
                     resultado.ValorRetorno = new TCredencialesEstudiante
                     {

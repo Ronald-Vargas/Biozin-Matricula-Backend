@@ -32,6 +32,8 @@ builder.Services.AddScoped<IEstudianteLN, EstudianteLN>();
 builder.Services.AddScoped<IOfertaAcademicaLN, OfertaAcademicaLN>();
 builder.Services.AddScoped<ICarreraCursoLN, CarreraCursoLN>();
 builder.Services.AddScoped<IAjustesLN, AjustesLN>();
+builder.Services.AddScoped<ICorreoServicio, CorreoServicio>();
+
 
 // CORS
 builder.Services.AddCors(options =>
