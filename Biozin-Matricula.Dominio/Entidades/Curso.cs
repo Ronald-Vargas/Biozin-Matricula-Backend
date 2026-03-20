@@ -33,5 +33,9 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("precio_laboratorio")]
         public decimal PrecioLaboratorio { get; set; }
+
+        [Column ("idCursoRequisito")]
+        public int? idCursoRequisito { get; set; }
+
     }
 }

@@ -17,6 +17,7 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<OfertaAcademica> OfertasAcademicas { get; set; }
         public DbSet<CarreraCurso> CarreraCursos { get; set; }
         public DbSet<Ajustes> Ajustes { get; set; }
+        public DbSet<Aula> Aulas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

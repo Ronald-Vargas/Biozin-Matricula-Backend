@@ -61,7 +61,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             html = html.Replace("{carnet}", carnet.ToString());
             html = html.Replace("{correoInstitucional}", correoInstitucional);
             html = html.Replace("{password}", password);
-            html = html.Replace("{urlCampus}", "https://campus.biozin.edu");
+            html = html.Replace("{urlCampus}", "http://localhost:4200/");
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
             html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 

@@ -61,6 +61,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.Descripcion = curso.Descripcion;
                     objDatos.ValorRetorno.Estado = curso.Estado;
                     objDatos.ValorRetorno.Precio = curso.Precio;
+                    objDatos.ValorRetorno.idCursoRequisito = curso.idCursoRequisito;
                     objDatos.ValorRetorno.TieneLaboratorio = curso.TieneLaboratorio;
                     objDatos.ValorRetorno.PrecioLaboratorio = curso.PrecioLaboratorio;
                     _unidadDeTrabajo.Cursos.Modificar(objDatos.ValorRetorno);
