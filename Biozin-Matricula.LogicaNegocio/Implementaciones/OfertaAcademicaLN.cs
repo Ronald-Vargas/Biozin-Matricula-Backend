@@ -59,9 +59,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error Insertar Oferta Academica: {0}{1}", ex.Message,
-                    ex.InnerException != null ? " | Inner: " + ex.InnerException.Message : "");
-                resultado.lpError("Error al Insertar", ex.InnerException?.Message ?? ex.Message);
+                var baseEx = ex.GetBaseException();
+                _logger.LogError("Error Insertar Oferta Academica: {0} | Base: {1}", ex.Message, baseEx.Message);
+                resultado.lpError("Error al Insertar", baseEx.Message);
             }
             return resultado;
         }

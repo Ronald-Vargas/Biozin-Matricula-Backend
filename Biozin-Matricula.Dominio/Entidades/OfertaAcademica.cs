@@ -7,6 +7,7 @@ namespace Biozin_Matricula.Dominio.Entidades
     public class OfertaAcademica
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id_oferta")]
         public int IdOferta { get; set; }
 

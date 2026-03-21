@@ -7,6 +7,12 @@ namespace Biozin_Matricula.Dominio.DTO
 {
     public class AutoMapperProfile : Profile
     {
+        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
         public AutoMapperProfile()
         {
             CreateMap<Curso, TCurso>().ReverseMap();
@@ -23,14 +29,18 @@ namespace Biozin_Matricula.Dominio.DTO
                 .ForMember(dest => dest.DiasHorarios, opt => opt.MapFrom(src =>
                     string.IsNullOrEmpty(src.DiasHorarios)
                         ? new List<TDiaHorario>()
-                        : JsonSerializer.Deserialize<List<TDiaHorario>>(src.DiasHorarios, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })));
+                        : JsonSerializer.Deserialize<List<TDiaHorario>>(src.DiasHorarios, _jsonOptions)));
 
-            // TOfertaAcademica -> OfertaAcademica: serialize List to JSON string
+            // TOfertaAcademica -> OfertaAcademica: serialize List to JSON string, ignore nav properties
             CreateMap<TOfertaAcademica, OfertaAcademica>()
                 .ForMember(dest => dest.DiasHorarios, opt => opt.MapFrom(src =>
                     src.DiasHorarios != null && src.DiasHorarios.Count > 0
-                        ? JsonSerializer.Serialize(src.DiasHorarios)
-                        : null));
+                        ? JsonSerializer.Serialize(src.DiasHorarios, _jsonOptions)
+                        : null))
+                .ForMember(dest => dest.Periodo, opt => opt.Ignore())
+                .ForMember(dest => dest.Curso, opt => opt.Ignore())
+                .ForMember(dest => dest.Profesor, opt => opt.Ignore())
+                .ForMember(dest => dest.Aula, opt => opt.Ignore());
         }
     }
 }
