@@ -14,6 +14,7 @@ namespace Biozin_Matricula.Dominio.DTO
             CreateMap<Periodo, TPeriodo>().ReverseMap();
             CreateMap<Estudiante, TEstudiante>().ReverseMap();
             CreateMap<OfertaAcademica, TOfertaAcademica>().ReverseMap();
+            CreateMap<DiaHorario, TDiaHorario>().ReverseMap();
             CreateMap<CarreraCurso, TCarreraCurso>().ReverseMap();
             CreateMap<Ajustes, TAjustes>().ReverseMap();
             CreateMap<Aula, TAula>().ReverseMap();

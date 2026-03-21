@@ -31,14 +31,11 @@ namespace Biozin_Matricula.Dominio.Entidades
         [ForeignKey("IdProfesor")]
         public Profesor? Profesor { get; set; }
 
-        [Column("dias")]
-        public string? Dias { get; set; }
+        [Column("id_aula")]
+        public int IdAula { get; set; }
 
-        [Column("horario")]
-        public string? Horario { get; set; }
-
-        [Column("aula")]
-        public string? Aula { get; set; }
+        [ForeignKey("IdAula")]
+        public Aula? Aula { get; set; }
 
         [Column("cupo_maximo")]
         public int CupoMaximo { get; set; }
@@ -54,5 +51,7 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("fecha_creacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        public ICollection<DiaHorario> DiasHorarios { get; set; } = new List<DiaHorario>();
     }
 }

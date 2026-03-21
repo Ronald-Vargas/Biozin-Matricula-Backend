@@ -26,24 +26,42 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.Codigo == oferta.Codigo);
-                if (objDatos.ValorRetorno == null)
+                var entidad = _mapper.Map<OfertaAcademica>(oferta);
+
+                // Auto-generate Codigo if not provided
+                if (string.IsNullOrEmpty(entidad.Codigo))
                 {
-                    var entidad = _mapper.Map<OfertaAcademica>(oferta);
-                    entidad.FechaCreacion = DateTime.UtcNow;
-                    _unidadDeTrabajo.OfertasAcademicas.Insertar(entidad);
-                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                    entidad.Codigo = $"OFA-{entidad.IdPeriodo}-{entidad.IdCurso}-{DateTime.UtcNow:yyyyMMddHHmmss}";
                 }
-                else
+
+                // Check if Codigo already exists
+                var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.Codigo == entidad.Codigo);
+                if (objDatos.ValorRetorno != null)
                 {
                     resultado.ValorRetorno = -1;
                     resultado.strMensajeRespuesta = "La oferta academica ya se encuentra registrada";
+                    return resultado;
                 }
+
+                // Get Precio from Curso if not provided
+                if (entidad.Precio == 0)
+                {
+                    var curso = _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == entidad.IdCurso);
+                    if (curso.ValorRetorno != null)
+                    {
+                        entidad.Precio = curso.ValorRetorno.Precio;
+                    }
+                }
+
+                entidad.FechaCreacion = DateTime.UtcNow;
+                _unidadDeTrabajo.OfertasAcademicas.Insertar(entidad);
+                resultado.ValorRetorno = _unidadDeTrabajo.Completar();
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error Insertar Oferta Academica: {0}", ex.Message);
-                resultado.lpError("Error al Insertar", ex.Message);
+                _logger.LogError("Error Insertar Oferta Academica: {0}{1}", ex.Message,
+                    ex.InnerException != null ? " | Inner: " + ex.InnerException.Message : "");
+                resultado.lpError("Error al Insertar", ex.InnerException?.Message ?? ex.Message);
             }
             return resultado;
         }
@@ -60,14 +78,29 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.IdPeriodo = oferta.IdPeriodo;
                     objDatos.ValorRetorno.IdCurso = oferta.IdCurso;
                     objDatos.ValorRetorno.IdProfesor = oferta.IdProfesor;
-                    objDatos.ValorRetorno.Dias = oferta.Dias;
-                    objDatos.ValorRetorno.Horario = oferta.Horario;
-                    objDatos.ValorRetorno.Aula = oferta.Aula;
+                    objDatos.ValorRetorno.IdAula = oferta.IdAula;
                     objDatos.ValorRetorno.CupoMaximo = oferta.CupoMaximo;
                     objDatos.ValorRetorno.Matriculados = oferta.Matriculados;
                     objDatos.ValorRetorno.Precio = oferta.Precio;
                     objDatos.ValorRetorno.Estado = oferta.Estado;
                     _unidadDeTrabajo.OfertasAcademicas.Modificar(objDatos.ValorRetorno);
+
+                    // Update DiasHorarios: remove existing and add new ones
+                    var existentes = _unidadDeTrabajo.DiasHorarios.ObtenerEntidades(d => d.IdOferta == oferta.IdOferta);
+                    if (existentes.ValorRetorno != null)
+                    {
+                        foreach (var dh in existentes.ValorRetorno)
+                        {
+                            _unidadDeTrabajo.DiasHorarios.Eliminar(dh);
+                        }
+                    }
+                    foreach (var dh in oferta.DiasHorarios)
+                    {
+                        var nuevoDia = _mapper.Map<DiaHorario>(dh);
+                        nuevoDia.IdOferta = oferta.IdOferta;
+                        _unidadDeTrabajo.DiasHorarios.Insertar(nuevoDia);
+                    }
+
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
                 else
@@ -79,7 +112,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             catch (Exception ex)
             {
                 _logger.LogError("Error Modificar Oferta Academica: {0}", ex.Message);
-                resultado.lpError("Error al Modificar", ex.Message);
+                resultado.lpError("Error al Modificar", ex.InnerException?.Message ?? ex.Message);
             }
             return resultado;
         }
@@ -105,7 +138,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             catch (Exception ex)
             {
                 _logger.LogError("Error Eliminar Oferta Academica: {0}", ex.Message);
-                resultado.lpError("Error al Eliminar", ex.Message);
+                resultado.lpError("Error al Eliminar", ex.InnerException?.Message ?? ex.Message);
             }
             return resultado;
         }
