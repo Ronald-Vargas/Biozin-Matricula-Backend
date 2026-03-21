@@ -28,21 +28,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 var entidad = _mapper.Map<OfertaAcademica>(oferta);
 
-                // Auto-generate Codigo if not provided
-                if (string.IsNullOrEmpty(entidad.Codigo))
-                {
-                    entidad.Codigo = $"OFA-{entidad.IdPeriodo}-{entidad.IdCurso}-{DateTime.UtcNow:yyMMddHHmm}";
-                }
-
-                // Check if Codigo already exists
-                var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.Codigo == entidad.Codigo);
-                if (objDatos.ValorRetorno != null)
-                {
-                    resultado.ValorRetorno = -1;
-                    resultado.strMensajeRespuesta = "La oferta academica ya se encuentra registrada";
-                    return resultado;
-                }
-
                 // Get Precio from Curso if not provided
                 if (entidad.Precio == 0)
                 {
