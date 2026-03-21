@@ -48,7 +48,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public decimal Precio { get; set; }
 
         [Column("estado")]
-        public bool Estado { get; set; } = true;
+        public string Estado { get; set; } = "Activo";
 
         [Column("fecha_creacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

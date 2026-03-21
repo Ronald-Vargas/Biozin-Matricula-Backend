@@ -80,11 +80,11 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.IdPeriodo = entidadActualizada.IdPeriodo;
                     objDatos.ValorRetorno.IdCurso = entidadActualizada.IdCurso;
                     objDatos.ValorRetorno.IdProfesor = entidadActualizada.IdProfesor;
-                    objDatos.ValorRetorno.IdAula = entidadActualizada.IdAula;
-                    objDatos.ValorRetorno.CupoMaximo = entidadActualizada.CupoMaximo;
-                    objDatos.ValorRetorno.Matriculados = entidadActualizada.Matriculados;
-                    objDatos.ValorRetorno.Precio = entidadActualizada.Precio;
-                    objDatos.ValorRetorno.Estado = entidadActualizada.Estado;
+                    objDatos.ValorRetorno.IdAula = oferta.IdAula;
+                    objDatos.ValorRetorno.CupoMaximo = oferta.CupoMaximo;
+                    objDatos.ValorRetorno.Matriculados = oferta.Matriculados;
+                    objDatos.ValorRetorno.Precio = oferta.Precio;
+                    objDatos.ValorRetorno.Estado = oferta.Estado;
                     objDatos.ValorRetorno.DiasHorarios = entidadActualizada.DiasHorarios;
 
                     _unidadDeTrabajo.OfertasAcademicas.Modificar(objDatos.ValorRetorno);
