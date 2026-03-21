@@ -31,7 +31,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 // Auto-generate Codigo if not provided
                 if (string.IsNullOrEmpty(entidad.Codigo))
                 {
-                    entidad.Codigo = $"OFA-{entidad.IdPeriodo}-{entidad.IdCurso}-{DateTime.UtcNow:yyyyMMddHHmmss}";
+                    entidad.Codigo = $"OFA-{entidad.IdPeriodo}-{entidad.IdCurso}-{DateTime.UtcNow:yyMMddHHmm}";
                 }
 
                 // Check if Codigo already exists
