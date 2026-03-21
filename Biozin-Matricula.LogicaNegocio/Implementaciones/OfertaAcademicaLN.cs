@@ -74,33 +74,20 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.IdOferta == oferta.IdOferta);
                 if (objDatos.ValorRetorno != null)
                 {
-                    objDatos.ValorRetorno.Codigo = oferta.Codigo;
-                    objDatos.ValorRetorno.IdPeriodo = oferta.IdPeriodo;
-                    objDatos.ValorRetorno.IdCurso = oferta.IdCurso;
-                    objDatos.ValorRetorno.IdProfesor = oferta.IdProfesor;
-                    objDatos.ValorRetorno.IdAula = oferta.IdAula;
-                    objDatos.ValorRetorno.CupoMaximo = oferta.CupoMaximo;
-                    objDatos.ValorRetorno.Matriculados = oferta.Matriculados;
-                    objDatos.ValorRetorno.Precio = oferta.Precio;
-                    objDatos.ValorRetorno.Estado = oferta.Estado;
+                    var entidadActualizada = _mapper.Map<OfertaAcademica>(oferta);
+
+                    objDatos.ValorRetorno.Codigo = entidadActualizada.Codigo;
+                    objDatos.ValorRetorno.IdPeriodo = entidadActualizada.IdPeriodo;
+                    objDatos.ValorRetorno.IdCurso = entidadActualizada.IdCurso;
+                    objDatos.ValorRetorno.IdProfesor = entidadActualizada.IdProfesor;
+                    objDatos.ValorRetorno.IdAula = entidadActualizada.IdAula;
+                    objDatos.ValorRetorno.CupoMaximo = entidadActualizada.CupoMaximo;
+                    objDatos.ValorRetorno.Matriculados = entidadActualizada.Matriculados;
+                    objDatos.ValorRetorno.Precio = entidadActualizada.Precio;
+                    objDatos.ValorRetorno.Estado = entidadActualizada.Estado;
+                    objDatos.ValorRetorno.DiasHorarios = entidadActualizada.DiasHorarios;
+
                     _unidadDeTrabajo.OfertasAcademicas.Modificar(objDatos.ValorRetorno);
-
-                    // Update DiasHorarios: remove existing and add new ones
-                    var existentes = _unidadDeTrabajo.DiasHorarios.ObtenerEntidades(d => d.IdOferta == oferta.IdOferta);
-                    if (existentes.ValorRetorno != null)
-                    {
-                        foreach (var dh in existentes.ValorRetorno)
-                        {
-                            _unidadDeTrabajo.DiasHorarios.Eliminar(dh);
-                        }
-                    }
-                    foreach (var dh in oferta.DiasHorarios)
-                    {
-                        var nuevoDia = _mapper.Map<DiaHorario>(dh);
-                        nuevoDia.IdOferta = oferta.IdOferta;
-                        _unidadDeTrabajo.DiasHorarios.Insertar(nuevoDia);
-                    }
-
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
                 else

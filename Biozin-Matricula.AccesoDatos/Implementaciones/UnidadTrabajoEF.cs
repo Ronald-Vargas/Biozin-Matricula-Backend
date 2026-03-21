@@ -16,7 +16,6 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
         public IRepositorioAD<CarreraCurso> CarreraCursos { get; private set; }
         public IRepositorioAD<Ajustes> Ajustes { get; private set; }
         public IRepositorioAD<Aula> Aulas { get; private set; }
-        public IRepositorioAD<DiaHorario> DiasHorarios { get; private set; }
 
         public UnidadTrabajoEF(MatriculaDbContext contexto)
         {
@@ -30,7 +29,6 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
             CarreraCursos = new RepositorioAD<CarreraCurso>(contexto);
             Ajustes = new RepositorioAD<Ajustes>(contexto);
             Aulas = new RepositorioAD<Aula>(contexto);
-            DiasHorarios = new RepositorioAD<DiaHorario>(contexto);
         }
 
         public int Completar()

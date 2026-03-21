@@ -32,7 +32,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public Profesor? Profesor { get; set; }
 
         [Column("id_aula")]
-        public int IdAula { get; set; }
+        public int? IdAula { get; set; }
 
         [ForeignKey("IdAula")]
         public Aula? Aula { get; set; }
@@ -52,6 +52,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("fecha_creacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
-        public ICollection<DiaHorario> DiasHorarios { get; set; } = new List<DiaHorario>();
+        [Column("dias_horarios")]
+        public string? DiasHorarios { get; set; }
     }
 }

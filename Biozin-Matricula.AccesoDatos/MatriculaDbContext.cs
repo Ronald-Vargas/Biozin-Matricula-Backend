@@ -18,7 +18,6 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<CarreraCurso> CarreraCursos { get; set; }
         public DbSet<Ajustes> Ajustes { get; set; }
         public DbSet<Aula> Aulas { get; set; }
-        public DbSet<DiaHorario> DiasHorarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,12 +42,6 @@ namespace Biozin_Matricula.AccesoDatos
                 .HasOne(o => o.Aula)
                 .WithMany()
                 .HasForeignKey(o => o.IdAula);
-
-            modelBuilder.Entity<OfertaAcademica>()
-                .HasMany(o => o.DiasHorarios)
-                .WithOne(d => d.OfertaAcademica)
-                .HasForeignKey(d => d.IdOferta)
-                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<CarreraCurso>()
                 .HasOne(cc => cc.Carrera)
