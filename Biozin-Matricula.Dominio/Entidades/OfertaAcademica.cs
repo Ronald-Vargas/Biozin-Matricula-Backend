@@ -11,9 +11,6 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("id_oferta")]
         public int IdOferta { get; set; }
 
-        [Column("codigo")]
-        public string Codigo { get; set; } = string.Empty;
-
         [Column("id_periodo")]
         public int IdPeriodo { get; set; }
 
@@ -48,7 +45,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public decimal Precio { get; set; }
 
         [Column("estado")]
-        public string Estado { get; set; } = "Activo";
+        public bool Estado { get; set; } = true;
 
         [Column("fecha_creacion")]
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;

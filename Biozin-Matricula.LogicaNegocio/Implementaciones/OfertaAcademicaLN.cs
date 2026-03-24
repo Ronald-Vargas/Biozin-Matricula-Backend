@@ -35,11 +35,22 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     if (curso.ValorRetorno != null)
                     {
                         entidad.Precio = curso.ValorRetorno.Precio;
+                        if (curso.ValorRetorno.TieneLaboratorio)
+                            entidad.Precio += curso.ValorRetorno.PrecioLaboratorio;
                     }
                 }
 
                 entidad.FechaCreacion = DateTime.UtcNow;
                 _unidadDeTrabajo.OfertasAcademicas.Insertar(entidad);
+
+                // Increment CursosAsignados on the professor
+                var profesor = _unidadDeTrabajo.Profesores.ObtenerEntidad(p => p.IdProfesor == entidad.IdProfesor);
+                if (profesor.ValorRetorno != null)
+                {
+                    profesor.ValorRetorno.CursosAsignados = (profesor.ValorRetorno.CursosAsignados ?? 0) + 1;
+                    _unidadDeTrabajo.Profesores.Modificar(profesor.ValorRetorno);
+                }
+
                 resultado.ValorRetorno = _unidadDeTrabajo.Completar();
             }
             catch (Exception ex)
@@ -61,7 +72,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 {
                     var entidadActualizada = _mapper.Map<OfertaAcademica>(oferta);
 
-                    objDatos.ValorRetorno.Codigo = entidadActualizada.Codigo;
                     objDatos.ValorRetorno.IdPeriodo = entidadActualizada.IdPeriodo;
                     objDatos.ValorRetorno.IdCurso = entidadActualizada.IdCurso;
                     objDatos.ValorRetorno.IdProfesor = entidadActualizada.IdProfesor;
@@ -97,6 +107,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.IdOferta == oferta.IdOferta);
                 if (objDatos.ValorRetorno != null)
                 {
+                    // Decrement CursosAsignados on the professor
+                    var profesor = _unidadDeTrabajo.Profesores.ObtenerEntidad(p => p.IdProfesor == objDatos.ValorRetorno.IdProfesor);
+                    if (profesor.ValorRetorno != null && profesor.ValorRetorno.CursosAsignados > 0)
+                    {
+                        profesor.ValorRetorno.CursosAsignados--;
+                        _unidadDeTrabajo.Profesores.Modificar(profesor.ValorRetorno);
+                    }
+
                     _unidadDeTrabajo.OfertasAcademicas.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;
@@ -121,7 +139,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             try
             {
                 var datos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidades(x =>
-                    (string.IsNullOrEmpty(oferta.Codigo) || x.Codigo.Contains(oferta.Codigo)));
+                    (oferta.IdOferta == 0 || x.IdOferta == oferta.IdOferta));
                 resultado.ValorRetorno = _mapper.Map<IEnumerable<TOfertaAcademica>>(datos.ValorRetorno);
             }
             catch (Exception ex)

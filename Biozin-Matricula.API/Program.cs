@@ -18,7 +18,10 @@ builder.Services.AddDbContext<MatriculaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionDB")));
 
 // AutoMapper
-builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+builder.Services.AddAutoMapper(cfg =>
+{
+    cfg.AddProfile<AutoMapperProfile>();
+});
 
 // Unit of Work
 builder.Services.AddScoped<IUnidadTrabajoEF, UnidadTrabajoEF>();
