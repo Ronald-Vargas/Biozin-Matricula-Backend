@@ -13,6 +13,8 @@ namespace Biozin_Matricula.Dominio.InterfacesAD
         IRepositorioAD<CarreraCurso> CarreraCursos { get; }
         IRepositorioAD<Ajustes> Ajustes { get; }
         IRepositorioAD<Aula> Aulas { get; }
+        IRepositorioAD<Matricula> Matriculas { get; }
+        IRepositorioAD<Pago> Pagos { get; }
         int Completar();
     }
 }
