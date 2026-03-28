@@ -23,6 +23,15 @@ namespace Biozin_Matricula.API.Controladores
             _config = config;
         }
 
+
+
+
+
+
+
+
+
+
         [HttpPost("Login")]
         public IActionResult Login([FromBody] TLoginEstudiante login)
         {
@@ -45,6 +54,12 @@ namespace Biozin_Matricula.API.Controladores
             return Ok(respuesta);
         }
 
+
+
+
+
+
+
         [Authorize]
         [HttpGet("Perfil")]
         public IActionResult ObtenerPerfil()
@@ -55,6 +70,15 @@ namespace Biozin_Matricula.API.Controladores
 
             return Ok(_ln.ObtenerPerfil(idEstudiante));
         }
+
+
+
+
+
+
+
+
+
 
         [Authorize]
         [HttpGet("Matricular/Ofertas")]
@@ -67,6 +91,13 @@ namespace Biozin_Matricula.API.Controladores
             return Ok(_ln.ObtenerOfertasDisponibles(idEstudiante));
         }
 
+
+
+
+
+
+
+
         [Authorize]
         [HttpPost("Matricular")]
         public IActionResult Matricular([FromBody] TMatricularSolicitud solicitud)
@@ -77,6 +108,11 @@ namespace Biozin_Matricula.API.Controladores
 
             return Ok(_ln.Matricular(idEstudiante, solicitud.IdOferta));
         }
+
+
+
+
+
 
         [Authorize]
         [HttpGet("Historial")]
@@ -89,6 +125,12 @@ namespace Biozin_Matricula.API.Controladores
             return Ok(_ln.ObtenerHistorial(idEstudiante));
         }
 
+
+
+
+
+
+
         [Authorize]
         [HttpGet("Pagos")]
         public IActionResult ObtenerPagos()
@@ -99,6 +141,10 @@ namespace Biozin_Matricula.API.Controladores
 
             return Ok(_ln.ObtenerPagos(idEstudiante));
         }
+
+
+
+
 
         [Authorize]
         [HttpPost("Pagos/Pagar/{idPago}")]
@@ -111,11 +157,22 @@ namespace Biozin_Matricula.API.Controladores
             return Ok(_ln.RealizarPago(idEstudiante, idPago));
         }
 
+
+
+
+
+
         private int ObtenerIdEstudiante()
         {
             var claim = User.FindFirst(ClaimTypes.NameIdentifier);
             return claim != null && int.TryParse(claim.Value, out var id) ? id : 0;
         }
+
+
+
+
+
+
 
         private string GenerarToken(TPerfilEstudiante perfil)
         {

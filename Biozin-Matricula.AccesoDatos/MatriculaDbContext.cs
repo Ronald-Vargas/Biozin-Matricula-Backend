@@ -20,6 +20,7 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<Aula> Aulas { get; set; }
         public DbSet<Matricula> Matriculas { get; set; }
         public DbSet<Pago> Pagos { get; set; }
+        public DbSet<Administrador> Administradores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -2,6 +2,7 @@ using System.Text;
 using Biozin_Matricula.AccesoDatos;
 using Biozin_Matricula.AccesoDatos.Implementaciones;
 using Biozin_Matricula.Dominio.DTO;
+using Biozin_Matricula.Dominio.Entidades;
 using Biozin_Matricula.Dominio.InterfacesAD;
 using Biozin_Matricula.Dominio.InterfacesLN;
 using Biozin_Matricula.LogicaNegocio.Implementaciones;
@@ -41,6 +42,7 @@ builder.Services.AddScoped<IAjustesLN, AjustesLN>();
 builder.Services.AddScoped<ICorreoServicio, CorreoServicio>();
 builder.Services.AddScoped<IAulaLN, AulaLN>();
 builder.Services.AddScoped<IPortalEstudianteLN, PortalEstudianteLN>();
+builder.Services.AddScoped<IAdministradorLN, AdministradorLN>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;

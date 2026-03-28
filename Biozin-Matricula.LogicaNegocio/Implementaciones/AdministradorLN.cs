@@ -1,0 +1,199 @@
+﻿using AutoMapper;
+using BCrypt.Net;
+using Biozin_Matricula.Dominio.Entidades;
+using Biozin_Matricula.Dominio.EntidadesTipadas;
+using Biozin_Matricula.Dominio.InterfacesAD;
+using Biozin_Matricula.Dominio.InterfacesLN;
+using Biozin_Matricula.Utilidades;
+using Microsoft.Extensions.Logging;
+
+
+namespace Biozin_Matricula.LogicaNegocio.Implementaciones
+{
+    public class AdministradorLN : IAdministradorLN
+    {
+        private readonly IUnidadTrabajoEF _unidadDeTrabajo;
+        private readonly IMapper _mapper;
+        private readonly ILogger<AdministradorLN> _logger;
+
+        public AdministradorLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<AdministradorLN> logger)
+        {
+            _unidadDeTrabajo = unidadDeTrabajo;
+            _mapper = mapper;
+            _logger = logger;
+        }
+
+        public Respuesta<int> Insertar(TAdministrador administrador)
+        {
+            var resultado = new Respuesta<int>();
+            try
+            {
+                var objDatos = _unidadDeTrabajo.Administradores.ObtenerEntidad(y => y.Identificacion == administrador.Identificacion);
+                if (objDatos.ValorRetorno == null)
+                {
+                    var entidad = _mapper.Map<Administrador>(administrador);
+                    entidad.Contraseña = BCrypt.Net.BCrypt.HashPassword(administrador.Contraseña);
+                    _unidadDeTrabajo.Administradores.Insertar(entidad);
+                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                }
+                else
+                {
+                    resultado.ValorRetorno = -1;
+                    resultado.strMensajeRespuesta = "El administrador ya se encuentra registrado";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Insertar Administrador: {0}", ex.Message);
+                resultado.lpError("Error al Insertar", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
+
+
+
+
+        public Respuesta<int> Modificar(TAdministrador administrador)
+        {
+            var resultado = new Respuesta<int>();
+            try
+            {
+                var objDatos = _unidadDeTrabajo.Administradores.ObtenerEntidad(y => y.IdAdministrador == administrador.IdAdministrador);
+                if (objDatos.ValorRetorno != null)
+                {
+                    objDatos.ValorRetorno.Identificacion = administrador.Identificacion;
+                    objDatos.ValorRetorno.NombreCompleto = administrador.NombreCompleto;
+                    objDatos.ValorRetorno.Usuario = administrador.Usuario;
+                    objDatos.ValorRetorno.Correo = administrador.Correo;
+                    objDatos.ValorRetorno.Telefono = administrador.Telefono;
+                    if (!string.IsNullOrWhiteSpace(administrador.Contraseña))
+                        objDatos.ValorRetorno.Contraseña = BCrypt.Net.BCrypt.HashPassword(administrador.Contraseña);
+                    objDatos.ValorRetorno.Activo = administrador.Activo;
+
+                    _unidadDeTrabajo.Administradores.Modificar(objDatos.ValorRetorno);
+                    resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                }
+                else
+                {
+                    resultado.ValorRetorno = -1;
+                    resultado.strMensajeRespuesta = "El administrador no existe";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Modificar Administrador: {0}", ex.Message);
+                resultado.lpError("Error al Modificar", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
+
+
+
+
+
+
+        public Respuesta<bool> Eliminar(TAdministrador administrador)
+        {
+            var resultado = new Respuesta<bool>();
+            try
+            {
+                var objDatos = _unidadDeTrabajo.Administradores.ObtenerEntidad(y => y.IdAdministrador == administrador.IdAdministrador);
+                if (objDatos.ValorRetorno != null)
+                {
+                    _unidadDeTrabajo.Administradores.Eliminar(objDatos.ValorRetorno);
+                    _unidadDeTrabajo.Completar();
+                    resultado.ValorRetorno = true;
+                }
+                else
+                {
+                    resultado.ValorRetorno = false;
+                    resultado.strMensajeRespuesta = "El administrador no existe";
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Eliminar Administrador: {0}", ex.Message);
+                resultado.lpError("Error al Eliminar", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
+
+
+
+
+
+        public Respuesta<IEnumerable<TAdministrador>> Obtener(TAdministrador administrador)
+        {
+            var resultado = new Respuesta<IEnumerable<TAdministrador>>();
+            try
+            {
+                var datos = _unidadDeTrabajo.Administradores.ObtenerEntidades(x =>
+                    (string.IsNullOrEmpty(administrador.Identificacion) || x.Identificacion.Contains(administrador.Identificacion)));
+                resultado.ValorRetorno = _mapper.Map<IEnumerable<TAdministrador>>(datos.ValorRetorno);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
+
+
+
+
+
+        public Respuesta<TAdministrador> Buscar(TAdministrador administrador)
+        {
+            var resultado = new Respuesta<TAdministrador>();
+            try
+            {
+                var datos = _unidadDeTrabajo.Administradores.ObtenerEntidad(x => x.IdAdministrador == administrador.IdAdministrador);
+                resultado.ValorRetorno = _mapper.Map<TAdministrador>(datos.ValorRetorno);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
+            return resultado;
+        }
+
+
+
+
+
+
+        public Respuesta<IEnumerable<TAdministrador>> Listar()
+        {
+            var resultado = new Respuesta<IEnumerable<TAdministrador>>();
+            try
+            {
+                var datos = _unidadDeTrabajo.Administradores.Listar();
+                resultado.ValorRetorno = _mapper.Map<IEnumerable<TAdministrador>>(datos.ValorRetorno);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message);
+                resultado.lpError("Error", ex.Message);
+            }
+            return resultado;
+        }
+    }
+}

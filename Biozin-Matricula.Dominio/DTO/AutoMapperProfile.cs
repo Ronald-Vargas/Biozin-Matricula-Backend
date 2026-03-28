@@ -23,6 +23,8 @@ namespace Biozin_Matricula.Dominio.DTO
             CreateMap<CarreraCurso, TCarreraCurso>().ReverseMap();
             CreateMap<Ajustes, TAjustes>().ReverseMap();
             CreateMap<Aula, TAula>().ReverseMap();
+            CreateMap<Administrador, TAdministrador>().ReverseMap();
+
 
             // OfertaAcademica -> TOfertaAcademica: deserialize JSON string to List
             CreateMap<OfertaAcademica, TOfertaAcademica>()
