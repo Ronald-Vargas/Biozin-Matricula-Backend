@@ -26,6 +26,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             _logger = logger;
         }
 
+
+
+
         public Respuesta<TPerfilEstudiante> Login(TLoginEstudiante login)
         {
             var resultado = new Respuesta<TPerfilEstudiante>();
@@ -70,6 +73,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             }
             return resultado;
         }
+
+
+
+
+
+
+
+
 
         public Respuesta<TPerfilEstudiante> ObtenerPerfil(int idEstudiante)
         {

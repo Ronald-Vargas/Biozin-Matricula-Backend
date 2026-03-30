@@ -21,8 +21,8 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("nombreCompleto")]
         public string NombreCompleto { get; set; }
 
-        [Column("usuario")]
-        public string Usuario { get; set; }
+        [Column("email_institucional")]
+        public string EmailInstitucional { get; set; }
 
         [Column("correo")]
         public string Correo { get; set; }

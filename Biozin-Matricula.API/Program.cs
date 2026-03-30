@@ -1,4 +1,3 @@
-using System.Text;
 using Biozin_Matricula.AccesoDatos;
 using Biozin_Matricula.AccesoDatos.Implementaciones;
 using Biozin_Matricula.Dominio.DTO;
@@ -9,11 +8,15 @@ using Biozin_Matricula.LogicaNegocio.Implementaciones;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+        opt.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

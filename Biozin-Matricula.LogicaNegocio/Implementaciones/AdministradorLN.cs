@@ -33,6 +33,10 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 {
                     var entidad = _mapper.Map<Administrador>(administrador);
                     entidad.Contraseña = BCrypt.Net.BCrypt.HashPassword(administrador.Contraseña);
+
+                    var baseEmail = GeneradorCredenciales.GenerarBaseEmailDesdeNombreCompleto(administrador.NombreCompleto);
+                    entidad.EmailInstitucional = GeneradorCredenciales.ConstruirEmailAdministrador(baseEmail);
+
                     _unidadDeTrabajo.Administradores.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
@@ -67,7 +71,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 {
                     objDatos.ValorRetorno.Identificacion = administrador.Identificacion;
                     objDatos.ValorRetorno.NombreCompleto = administrador.NombreCompleto;
-                    objDatos.ValorRetorno.Usuario = administrador.Usuario;
+                    objDatos.ValorRetorno.EmailInstitucional = administrador.EmailInstitucional;
                     objDatos.ValorRetorno.Correo = administrador.Correo;
                     objDatos.ValorRetorno.Telefono = administrador.Telefono;
                     if (!string.IsNullOrWhiteSpace(administrador.Contraseña))
@@ -192,6 +196,39 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 _logger.LogError(ex.Message);
                 resultado.lpError("Error", ex.Message);
+            }
+            return resultado;
+        }
+
+        public Respuesta<TAdministrador> Login(string email, string contrasena)
+        {
+            var resultado = new Respuesta<TAdministrador>();
+            try
+            {
+                var admin = _unidadDeTrabajo.Administradores
+                    .ObtenerEntidad(a => a.EmailInstitucional == email)
+                    .ValorRetorno;
+
+                if (admin == null || !BCrypt.Net.BCrypt.Verify(contrasena, admin.Contraseña))
+                {
+                    resultado.lpError("Error de autenticación", "Credenciales inválidas");
+                    return resultado;
+                }
+
+                if (!admin.Activo)
+                {
+                    resultado.lpError("Cuenta inactiva", "Su cuenta ha sido desactivada. Contacte al administrador.");
+                    return resultado;
+                }
+
+                var perfil = _mapper.Map<TAdministrador>(admin);
+                perfil.Contraseña = string.Empty;
+                resultado.ValorRetorno = perfil;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Login Administrador: {0}", ex.Message);
+                resultado.lpError("Error al iniciar sesión", ex.Message);
             }
             return resultado;
         }

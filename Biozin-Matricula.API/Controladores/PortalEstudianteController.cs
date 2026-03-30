@@ -1,12 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesLN;
-using Biozin_Matricula.Utilidades;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Biozin_Matricula.API.Controladores
 {
@@ -15,12 +11,10 @@ namespace Biozin_Matricula.API.Controladores
     public class PortalEstudianteController : ControllerBase
     {
         private readonly IPortalEstudianteLN _ln;
-        private readonly IConfiguration _config;
 
-        public PortalEstudianteController(IPortalEstudianteLN ln, IConfiguration config)
+        public PortalEstudianteController(IPortalEstudianteLN ln)
         {
             _ln = ln;
-            _config = config;
         }
 
 
@@ -32,27 +26,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [HttpPost("Login")]
-        public IActionResult Login([FromBody] TLoginEstudiante login)
-        {
-            var resultado = _ln.Login(login);
-
-            if (resultado.blnError || resultado.ValorRetorno == null)
-                return Ok(resultado);
-
-            var token = GenerarToken(resultado.ValorRetorno);
-
-            var respuesta = new Respuesta<TLoginRespuesta>
-            {
-                ValorRetorno = new TLoginRespuesta
-                {
-                    Token = token,
-                    Perfil = resultado.ValorRetorno
-                }
-            };
-
-            return Ok(respuesta);
-        }
 
 
 
@@ -174,31 +147,5 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        private string GenerarToken(TPerfilEstudiante perfil)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, perfil.IdEstudiante.ToString()),
-                new Claim(ClaimTypes.Name, perfil.Nombre),
-                new Claim(ClaimTypes.Email, perfil.EmailInstitucional ?? ""),
-                new Claim("carnet", perfil.Carnet.ToString()),
-                new Claim(ClaimTypes.Role, "Estudiante")
-            };
-
-            var expireMinutes = int.Parse(_config["Jwt:ExpireMinutes"] ?? "480");
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(expireMinutes),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
     }
 }

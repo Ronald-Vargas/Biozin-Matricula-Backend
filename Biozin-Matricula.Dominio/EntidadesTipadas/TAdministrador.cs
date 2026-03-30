@@ -16,7 +16,7 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
 
         public string NombreCompleto { get; set; }
 
-        public string Usuario { get; set; }
+        public string EmailInstitucional { get; set; }
 
         public string Correo { get; set; }
 

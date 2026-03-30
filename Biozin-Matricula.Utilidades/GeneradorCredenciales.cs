@@ -4,8 +4,9 @@ namespace Biozin_Matricula.Utilidades
 {
     public static class GeneradorCredenciales
     {
-        private const string Dominio = "@biozin.edu.cr";
+        private const string Dominio = "@prof.biozin.edu.cr";
         private const string DominioEstudiante = "@est.biozin.edu.cr";
+        private const string DominioAdministrador = "@admin.biozin.edu.cr";
 
         private static readonly char[] Minusculas = "abcdefghijklmnopqrstuvwxyz".ToCharArray();
         private static readonly char[] Mayusculas = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
@@ -36,6 +37,23 @@ namespace Biozin_Matricula.Utilidades
         {
             var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
             return $"{local}{DominioEstudiante}";
+        }
+
+        /// Construye el email completo con el dominio institucional de administradores.
+        /// Si sufijo > 0, lo agrega al final: "juan.perez2@admin.biozin.edu.cr"
+        public static string ConstruirEmailAdministrador(string baseEmail, int sufijo = 0)
+        {
+            var local = sufijo > 0 ? $"{baseEmail}{sufijo}" : baseEmail;
+            return $"{local}{DominioAdministrador}";
+        }
+
+        /// Genera la base del email a partir del nombreCompleto con formato "Nombre PrimerApellido SegundoApellido".
+        public static string GenerarBaseEmailDesdeNombreCompleto(string nombreCompleto)
+        {
+            var partes = nombreCompleto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var nombre = partes.Length > 0 ? partes[0] : string.Empty;
+            var primerApellido = partes.Length > 1 ? partes[1] : string.Empty;
+            return GenerarBaseEmail(nombre, primerApellido);
         }
 
         /// Genera un carnet con formato AÑOxxxxx (ej: 202600123).
