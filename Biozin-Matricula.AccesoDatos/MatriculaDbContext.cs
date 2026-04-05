@@ -18,6 +18,9 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<CarreraCurso> CarreraCursos { get; set; }
         public DbSet<Ajustes> Ajustes { get; set; }
         public DbSet<Aula> Aulas { get; set; }
+        public DbSet<Matricula> Matriculas { get; set; }
+        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<Administrador> Administradores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +63,36 @@ namespace Biozin_Matricula.AccesoDatos
 
             modelBuilder.Entity<OfertaAcademica>()
                 .Property(o => o.Precio)
+                .HasColumnType("decimal(18,2)");
+
+            // Matricula relationships
+            modelBuilder.Entity<Matricula>()
+                .HasOne(m => m.Estudiante)
+                .WithMany()
+                .HasForeignKey(m => m.IdEstudiante);
+
+            modelBuilder.Entity<Matricula>()
+                .HasOne(m => m.OfertaAcademica)
+                .WithMany()
+                .HasForeignKey(m => m.IdOferta);
+
+            modelBuilder.Entity<Matricula>()
+                .Property(m => m.Nota)
+                .HasColumnType("decimal(5,2)");
+
+            modelBuilder.Entity<Matricula>()
+                .HasIndex(m => new { m.IdEstudiante, m.IdOferta })
+                .IsUnique()
+                .HasDatabaseName("UQ_matricula");
+
+            // Pago relationships
+            modelBuilder.Entity<Pago>()
+                .HasOne(p => p.Matricula)
+                .WithMany()
+                .HasForeignKey(p => p.IdMatricula);
+
+            modelBuilder.Entity<Pago>()
+                .Property(p => p.Monto)
                 .HasColumnType("decimal(18,2)");
 
         }
