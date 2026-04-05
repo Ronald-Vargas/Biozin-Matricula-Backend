@@ -60,6 +60,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     entidad.EmailInstitucional = email;
                     entidad.carnet = carnet;
                     entidad.Contrasena = contrasenaHash;
+                    entidad.RequiereCambioContrasena = true;
                     entidad.FechaIngreso = DateTime.UtcNow;
 
                     _unidadDeTrabajo.Estudiantes.Insertar(entidad);

@@ -47,6 +47,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var entidad = _mapper.Map<Profesor>(profesor);
                     entidad.EmailInstitucional = email;
                     entidad.Contrasena = contrasenaHash;
+                    entidad.RequiereCambioContrasena = true;
                     entidad.FechaIngreso = DateTime.UtcNow;
 
                     _unidadDeTrabajo.Profesores.Insertar(entidad);

@@ -108,5 +108,8 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("contraseña")]
         public string Contrasena { get; set; } = string.Empty;
+
+        [Column("requiere_cambio_contrasena")]
+        public bool RequiereCambioContrasena { get; set; } = true;
     }
 }

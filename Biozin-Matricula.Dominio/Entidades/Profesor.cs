@@ -68,6 +68,9 @@ namespace Biozin_Matricula.Dominio.Entidades
         public DateTime? FechaIngreso { get; set; }
 
         [Column("estado")]
-        public bool Estado { get; set; } 
+        public bool Estado { get; set; }
+
+        [Column("requiere_cambio_contrasena")]
+        public bool RequiereCambioContrasena { get; set; } = true;
     }
 }

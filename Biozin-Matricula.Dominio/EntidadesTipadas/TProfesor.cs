@@ -23,5 +23,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string Contrasena { get; set; } = string.Empty;
         public DateTime? FechaIngreso { get; set; }
         public bool Estado { get; set; }
+        public bool RequiereCambioContrasena { get; set; } = true;
     }
 }

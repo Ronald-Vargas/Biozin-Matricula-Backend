@@ -37,6 +37,7 @@ builder.Services.AddScoped<ICarreraCursoLN, CarreraCursoLN>();
 builder.Services.AddScoped<IAjustesLN, AjustesLN>();
 builder.Services.AddScoped<ICorreoServicio, CorreoServicio>();
 builder.Services.AddScoped<IAulaLN, AulaLN>();
+builder.Services.AddScoped<IAuthLN, AuthLN>();
 
 
 // CORS

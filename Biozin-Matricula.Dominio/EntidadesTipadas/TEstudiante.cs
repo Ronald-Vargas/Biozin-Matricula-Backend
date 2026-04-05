@@ -34,7 +34,8 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string? Observaciones { get; set; }
         public string Contrasena { get; set; } = string.Empty;
 
-        public long carnet { get; set; } 
+        public long carnet { get; set; }
 
+        public bool RequiereCambioContrasena { get; set; } = true;
     }
 }
