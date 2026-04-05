@@ -5,6 +5,7 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
 {
     public interface IAuthLN
     {
+        Respuesta<TLoginRespuesta> Login(TLogin datos);
         Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
     }
 }
