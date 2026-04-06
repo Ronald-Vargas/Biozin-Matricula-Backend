@@ -10,7 +10,7 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
 {
     public interface IAdministradorLN
     {
-        Respuesta<int> Insertar(TAdministrador administrador);
+        Task<Respuesta<int>> Insertar(TAdministrador administrador);
         Respuesta<int> Modificar(TAdministrador administrador);
         Respuesta<bool> Eliminar(TAdministrador administrador);
         Respuesta<IEnumerable<TAdministrador>> Obtener(TAdministrador administrador);

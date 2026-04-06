@@ -5,6 +5,7 @@ using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
 using Biozin_Matricula.Dominio.InterfacesLN;
 using Biozin_Matricula.Utilidades;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Biozin_Matricula.LogicaNegocio.Implementaciones
@@ -14,15 +15,19 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
         private readonly ILogger<ProfesorLN> _logger;
+        private readonly ICorreoServicio _correo;
+        private readonly IConfiguration _config;
 
-        public ProfesorLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<ProfesorLN> logger)
+        public ProfesorLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<ProfesorLN> logger, ICorreoServicio correo, IConfiguration config)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
+            _correo = correo;
+            _config = config;
         }
 
-        public Respuesta<TCredencialesProfesor> Insertar(TProfesor profesor)
+        public async Task<Respuesta<TCredencialesProfesor>> Insertar(TProfesor profesor)
         {
             var resultado = new Respuesta<TCredencialesProfesor>();
             try
@@ -52,6 +57,20 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     _unidadDeTrabajo.Profesores.Insertar(entidad);
                     _unidadDeTrabajo.Completar();
+
+                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+
+                    await _correo.EnviarCredencialesStaffAsync(
+                        profesor.EmailPersonal,
+                        profesor.Nombre,
+                        email,
+                        contrasenaTxt,
+                        "Profesor",
+                        nombreUniversidad,
+                        correoRemitente
+                    );
 
                     resultado.ValorRetorno = new TCredencialesProfesor
                     {

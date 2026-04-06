@@ -16,14 +16,17 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
 
         public string NombreCompleto { get; set; }
 
-        public string EmailInstitucional { get; set; }
+        public string? EmailInstitucional { get; set; }
 
-        public string Correo { get; set; }
+        public string? Correo { get; set; }
 
-        public string Telefono { get; set; }
+        public string? Telefono { get; set; }
 
-        public string Contraseña { get; set; }
+        public string? Contraseña { get; set; }
 
         public bool Activo { get; set; } = true;
+
+        public bool RequiereCambioContrasena { get; set; } = true;
+
     }
 }

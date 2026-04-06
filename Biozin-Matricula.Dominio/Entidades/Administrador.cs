@@ -35,6 +35,9 @@ namespace Biozin_Matricula.Dominio.Entidades
 
         [Column("activo")]
         public bool Activo { get; set; } = true;
+
+        [Column("requiere_cambio_contrasena")]
+        public bool RequiereCambioContrasena { get; set; } = true;
     }
 }
 

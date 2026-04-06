@@ -14,7 +14,7 @@ namespace Biozin_Matricula.API.Controladores
 
 
         [HttpPost("Insertar")]
-        public IActionResult Insertar([FromBody] TAdministrador obj) => Ok(_ln.Insertar(obj));
+        public async Task<IActionResult> Insertar([FromBody] TAdministrador obj) => Ok(await _ln.Insertar(obj));
 
         [HttpPut("Modificar")]
         public IActionResult Modificar([FromBody] TAdministrador obj) => Ok(_ln.Modificar(obj));

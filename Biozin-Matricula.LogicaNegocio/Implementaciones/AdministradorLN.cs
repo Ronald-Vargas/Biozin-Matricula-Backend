@@ -5,6 +5,7 @@ using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
 using Biozin_Matricula.Dominio.InterfacesLN;
 using Biozin_Matricula.Utilidades;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 
@@ -15,15 +16,19 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
         private readonly ILogger<AdministradorLN> _logger;
+        private readonly ICorreoServicio _correo;
+        private readonly IConfiguration _config;
 
-        public AdministradorLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<AdministradorLN> logger)
+        public AdministradorLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<AdministradorLN> logger, ICorreoServicio correo, IConfiguration config)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
+            _correo = correo;
+            _config = config;
         }
 
-        public Respuesta<int> Insertar(TAdministrador administrador)
+        public async Task<Respuesta<int>> Insertar(TAdministrador administrador)
         {
             var resultado = new Respuesta<int>();
             try
@@ -31,14 +36,33 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Administradores.ObtenerEntidad(y => y.Identificacion == administrador.Identificacion);
                 if (objDatos.ValorRetorno == null)
                 {
+                    
                     var entidad = _mapper.Map<Administrador>(administrador);
-                    entidad.Contraseña = BCrypt.Net.BCrypt.HashPassword(administrador.Contraseña);
-
                     var baseEmail = GeneradorCredenciales.GenerarBaseEmailDesdeNombreCompleto(administrador.NombreCompleto);
                     entidad.EmailInstitucional = GeneradorCredenciales.ConstruirEmailAdministrador(baseEmail);
 
+                    // Generar contraseña y hashear
+                    var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
+                    var contrasenaHash = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
+
+                    entidad.Contraseña = contrasenaHash;
+                    entidad.RequiereCambioContrasena = true;
                     _unidadDeTrabajo.Administradores.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+
+                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+
+                    await _correo.EnviarCredencialesStaffAsync(
+                        administrador.Correo,
+                        administrador.NombreCompleto,
+                        entidad.EmailInstitucional,
+                        contrasenaTxt,
+                        "Administrador",
+                        nombreUniversidad,
+                        correoRemitente
+                    );
                 }
                 else
                 {
@@ -74,8 +98,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.EmailInstitucional = administrador.EmailInstitucional;
                     objDatos.ValorRetorno.Correo = administrador.Correo;
                     objDatos.ValorRetorno.Telefono = administrador.Telefono;
-                    if (!string.IsNullOrWhiteSpace(administrador.Contraseña))
-                        objDatos.ValorRetorno.Contraseña = BCrypt.Net.BCrypt.HashPassword(administrador.Contraseña);
                     objDatos.ValorRetorno.Activo = administrador.Activo;
 
                     _unidadDeTrabajo.Administradores.Modificar(objDatos.ValorRetorno);

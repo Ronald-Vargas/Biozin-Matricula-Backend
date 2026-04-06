@@ -10,14 +10,24 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
     {
 
         Task EnviarCredencialesAsync(
-        string correoDestino,
-        string nombre,
-        long carnet,
-        string correoInstitucional,
-        string password,
-        string nombreUniversidad,
-        string correoRemitente
-    );
+            string correoDestino,
+            string nombre,
+            long carnet,
+            string correoInstitucional,
+            string password,
+            string nombreUniversidad,
+            string correoRemitente
+        );
+
+        Task EnviarCredencialesStaffAsync(
+            string correoDestino,
+            string nombre,
+            string correoInstitucional,
+            string password,
+            string rol,
+            string nombreUniversidad,
+            string correoRemitente
+        );
 
     }
 }
