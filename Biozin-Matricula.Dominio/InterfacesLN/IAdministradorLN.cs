@@ -17,5 +17,6 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<TAdministrador> Buscar(TAdministrador administrador);
         Respuesta<IEnumerable<TAdministrador>> Listar();
         Respuesta<TAdministrador> Login(string email, string contrasena);
+        Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
     }
 }

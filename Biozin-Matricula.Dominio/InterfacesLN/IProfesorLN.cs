@@ -11,5 +11,7 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<IEnumerable<TProfesor>> Obtener(TProfesor profesor);
         Respuesta<TProfesor> Buscar(TProfesor profesor);
         Respuesta<IEnumerable<TProfesor>> Listar();
+        Respuesta<TProfesor> Login(string email, string contrasena);
+        Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
     }
 }

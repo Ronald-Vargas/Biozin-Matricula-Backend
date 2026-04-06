@@ -42,15 +42,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                 entidad.FechaCreacion = DateTime.UtcNow;
                 _unidadDeTrabajo.OfertasAcademicas.Insertar(entidad);
-
-                // Increment CursosAsignados on the professor
-                var profesor = _unidadDeTrabajo.Profesores.ObtenerEntidad(p => p.IdProfesor == entidad.IdProfesor);
-                if (profesor.ValorRetorno != null)
-                {
-                    profesor.ValorRetorno.CursosAsignados = (profesor.ValorRetorno.CursosAsignados ?? 0) + 1;
-                    _unidadDeTrabajo.Profesores.Modificar(profesor.ValorRetorno);
-                }
-
                 resultado.ValorRetorno = _unidadDeTrabajo.Completar();
             }
             catch (Exception ex)
@@ -107,14 +98,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.IdOferta == oferta.IdOferta);
                 if (objDatos.ValorRetorno != null)
                 {
-                    // Decrement CursosAsignados on the professor
-                    var profesor = _unidadDeTrabajo.Profesores.ObtenerEntidad(p => p.IdProfesor == objDatos.ValorRetorno.IdProfesor);
-                    if (profesor.ValorRetorno != null && profesor.ValorRetorno.CursosAsignados > 0)
-                    {
-                        profesor.ValorRetorno.CursosAsignados--;
-                        _unidadDeTrabajo.Profesores.Modificar(profesor.ValorRetorno);
-                    }
-
                     _unidadDeTrabajo.OfertasAcademicas.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;

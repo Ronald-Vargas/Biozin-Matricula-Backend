@@ -15,18 +15,21 @@ namespace Biozin_Matricula.API.Controladores
     {
         private readonly IPortalEstudianteLN _portalEstudianteLN;
         private readonly IAdministradorLN _administradorLN;
+        private readonly IProfesorLN _profesorLN;
         private readonly IConfiguration _config;
 
-        public AuthController(IPortalEstudianteLN portalEstudianteLN, IAdministradorLN administradorLN, IConfiguration config)
+        public AuthController(IPortalEstudianteLN portalEstudianteLN, IAdministradorLN administradorLN, IProfesorLN profesorLN, IConfiguration config)
         {
             _portalEstudianteLN = portalEstudianteLN;
             _administradorLN = administradorLN;
+            _profesorLN = profesorLN;
             _config = config;
         }
 
         /// <summary>
         /// Login unificado. Detecta el rol según el dominio del email:
         ///   @est.biozin.edu.cr   → Estudiante
+        ///   @prof.biozin.edu.cr  → Profesor
         ///   @admin.biozin.edu.cr → Administrador
         /// </summary>
         [HttpPost("Login")]
@@ -37,6 +40,7 @@ namespace Biozin_Matricula.API.Controladores
             return dominio switch
             {
                 "@est.biozin.edu.cr" => LoginEstudiante(login),
+                "@prof.biozin.edu.cr" => LoginProfesor(login),
                 "@admin.biozin.edu.cr" => LoginAdministrador(login),
                 _ => Ok(new Respuesta<TAuthRespuesta> { blnError = true, strTituloRespuesta = "Dominio no reconocido", strMensajeRespuesta = "El correo ingresado no corresponde a ningún perfil del sistema." })
             };
@@ -44,7 +48,17 @@ namespace Biozin_Matricula.API.Controladores
 
         [HttpPost("CambiarContrasenaTemporaria")]
         public IActionResult CambiarContrasenaTemporaria([FromBody] TCambioContrasena obj)
-            => Ok(_portalEstudianteLN.CambiarContrasenaTemporaria(obj));
+        {
+            var dominio = ObtenerDominio(obj.Email);
+
+            return dominio switch
+            {
+                "@est.biozin.edu.cr" => Ok(_portalEstudianteLN.CambiarContrasenaTemporaria(obj)),
+                "@prof.biozin.edu.cr" => Ok(_profesorLN.CambiarContrasenaTemporaria(obj)),
+                "@admin.biozin.edu.cr" => Ok(_administradorLN.CambiarContrasenaTemporaria(obj)),
+                _ => Ok(new Respuesta<object> { blnError = true, strTituloRespuesta = "Dominio no reconocido", strMensajeRespuesta = "El correo ingresado no corresponde a ningún perfil del sistema." })
+            };
+        }
 
         private IActionResult LoginEstudiante(TLoginRequest login)
         {
@@ -94,6 +108,43 @@ namespace Biozin_Matricula.API.Controladores
             });
         }
 
+        private IActionResult LoginProfesor(TLoginRequest login)
+        {
+            var resultado = _profesorLN.Login(login.Email, login.Contrasena);
+
+            if (resultado.blnError || resultado.ValorRetorno == null)
+            {
+                return Ok(new Respuesta<TAuthRespuesta>
+                {
+                    blnError = resultado.blnError,
+                    strTituloRespuesta = resultado.strTituloRespuesta,
+                    strMensajeRespuesta = resultado.strMensajeRespuesta
+                });
+            }
+
+            var profesor = resultado.ValorRetorno;
+            var token = GenerarToken(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, profesor.IdProfesor.ToString()),
+                new Claim(ClaimTypes.Name, $"{profesor.Nombre} {profesor.ApellidoPaterno}"),
+                new Claim(ClaimTypes.Email, profesor.EmailInstitucional ?? ""),
+                new Claim(ClaimTypes.Role, "Profesor")
+            });
+
+            return Ok(new Respuesta<TAuthRespuesta>
+            {
+                ValorRetorno = new TAuthRespuesta
+                {
+                    Token = token,
+                    Role = "Profesor",
+                    Id = profesor.IdProfesor,
+                    Nombre = $"{profesor.Nombre} {profesor.ApellidoPaterno}",
+                    Email = profesor.EmailInstitucional ?? "",
+                    RequiereCambioContrasena = profesor.RequiereCambioContrasena
+                }
+            });
+        }
+
         private IActionResult LoginAdministrador(TLoginRequest login)
         {
             var resultado = _administradorLN.Login(login.Email, login.Contrasena);
@@ -125,7 +176,8 @@ namespace Biozin_Matricula.API.Controladores
                     Role = "Administrador",
                     Id = admin.IdAdministrador,
                     Nombre = admin.NombreCompleto,
-                    Email = admin.EmailInstitucional ?? ""
+                    Email = admin.EmailInstitucional ?? "",
+                    RequiereCambioContrasena = admin.RequiereCambioContrasena
                 }
             });
         }

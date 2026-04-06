@@ -111,7 +111,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.Telefono = profesor.Telefono;
                     objDatos.ValorRetorno.Titulo = profesor.Titulo;
                     objDatos.ValorRetorno.Especialidad = profesor.Especialidad;
-                    objDatos.ValorRetorno.CursosAsignados = profesor.CursosAsignados;
                     objDatos.ValorRetorno.Provincia = profesor.Provincia;
                     objDatos.ValorRetorno.Canton = profesor.Canton;
                     objDatos.ValorRetorno.Distrito = profesor.Distrito;
@@ -206,6 +205,82 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 _logger.LogError(ex.Message);
                 resultado.lpError("Error", ex.Message);
+            }
+            return resultado;
+        }
+
+        public Respuesta<TProfesor> Login(string email, string contrasena)
+        {
+            var resultado = new Respuesta<TProfesor>();
+            try
+            {
+                var profesor = _unidadDeTrabajo.Profesores
+                    .ObtenerEntidad(p => p.EmailInstitucional == email)
+                    .ValorRetorno;
+
+                if (profesor == null || !BCrypt.Net.BCrypt.Verify(contrasena, profesor.Contrasena))
+                {
+                    resultado.lpError("Error de autenticación", "Credenciales inválidas");
+                    return resultado;
+                }
+
+                if (!profesor.Estado)
+                {
+                    resultado.lpError("Cuenta inactiva", "Su cuenta ha sido desactivada. Contacte al administrador.");
+                    return resultado;
+                }
+
+                var perfil = _mapper.Map<TProfesor>(profesor);
+                perfil.Contrasena = string.Empty;
+                resultado.ValorRetorno = perfil;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error Login Profesor: {0}", ex.Message);
+                resultado.lpError("Error al iniciar sesión", ex.Message);
+            }
+            return resultado;
+        }
+
+        public Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos)
+        {
+            var resultado = new Respuesta<object>();
+            try
+            {
+                var profesor = _unidadDeTrabajo.Profesores
+                    .ObtenerEntidad(p => p.EmailInstitucional == datos.Email)
+                    .ValorRetorno;
+
+                if (profesor == null)
+                {
+                    resultado.lpError("Error", "No se encontró una cuenta con ese correo.");
+                    return resultado;
+                }
+
+                if (!BCrypt.Net.BCrypt.Verify(datos.ContrasenaTemporal, profesor.Contrasena))
+                {
+                    resultado.lpError("Error", "La contraseña temporal es incorrecta.");
+                    return resultado;
+                }
+
+                if (datos.NuevaContrasena == datos.ContrasenaTemporal)
+                {
+                    resultado.lpError("Error", "La nueva contraseña no puede ser igual a la temporal.");
+                    return resultado;
+                }
+
+                profesor.Contrasena = BCrypt.Net.BCrypt.HashPassword(datos.NuevaContrasena);
+                profesor.RequiereCambioContrasena = false;
+                _unidadDeTrabajo.Profesores.Modificar(profesor);
+                _unidadDeTrabajo.Completar();
+
+                resultado.strTituloRespuesta = "Éxito";
+                resultado.strMensajeRespuesta = "Contraseña actualizada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error CambiarContrasenaTemporaria Profesor: {0}", ex.Message);
+                resultado.lpError("Error", "Ocurrió un error al procesar la solicitud.");
             }
             return resultado;
         }

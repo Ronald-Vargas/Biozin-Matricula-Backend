@@ -222,6 +222,49 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        public Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos)
+        {
+            var resultado = new Respuesta<object>();
+            try
+            {
+                var admin = _unidadDeTrabajo.Administradores
+                    .ObtenerEntidad(a => a.EmailInstitucional == datos.Email)
+                    .ValorRetorno;
+
+                if (admin == null)
+                {
+                    resultado.lpError("Error", "No se encontró una cuenta con ese correo.");
+                    return resultado;
+                }
+
+                if (!BCrypt.Net.BCrypt.Verify(datos.ContrasenaTemporal, admin.Contraseña))
+                {
+                    resultado.lpError("Error", "La contraseña temporal es incorrecta.");
+                    return resultado;
+                }
+
+                if (datos.NuevaContrasena == datos.ContrasenaTemporal)
+                {
+                    resultado.lpError("Error", "La nueva contraseña no puede ser igual a la temporal.");
+                    return resultado;
+                }
+
+                admin.Contraseña = BCrypt.Net.BCrypt.HashPassword(datos.NuevaContrasena);
+                admin.RequiereCambioContrasena = false;
+                _unidadDeTrabajo.Administradores.Modificar(admin);
+                _unidadDeTrabajo.Completar();
+
+                resultado.strTituloRespuesta = "Éxito";
+                resultado.strMensajeRespuesta = "Contraseña actualizada correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error CambiarContrasenaTemporaria Administrador: {0}", ex.Message);
+                resultado.lpError("Error", "Ocurrió un error al procesar la solicitud.");
+            }
+            return resultado;
+        }
+
         public Respuesta<TAdministrador> Login(string email, string contrasena)
         {
             var resultado = new Respuesta<TAdministrador>();
