@@ -202,6 +202,17 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     .Select(m => m.IdOferta)
                     .ToHashSet();
 
+                // Get course IDs the student has already enrolled in (across all periods)
+                var idsOfertasDelEstudiante = matriculasExistentes.Select(m => m.IdOferta).ToList();
+                var ofertasDelEstudiante = idsOfertasDelEstudiante.Any()
+                    ? _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => idsOfertasDelEstudiante.Contains(o.IdOferta))
+                        .ValorRetorno ?? Enumerable.Empty<OfertaAcademica>()
+                    : Enumerable.Empty<OfertaAcademica>();
+                var idsCursosMatriculados = ofertasDelEstudiante
+                    .Select(o => o.IdCurso)
+                    .ToHashSet();
+
                 var ofertasDisponibles = new List<TOfertaDisponible>();
 
                 foreach (var oferta in ofertas)
@@ -213,6 +224,10 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var curso = _unidadDeTrabajo.Cursos
                         .ObtenerEntidad(c => c.IdCurso == oferta.IdCurso)
                         .ValorRetorno;
+
+                    // Skip courses whose prerequisite the student hasn't enrolled in yet
+                    if (curso?.idCursoRequisito.HasValue == true && !idsCursosMatriculados.Contains(curso.idCursoRequisito.Value))
+                        continue;
 
                     var profesor = _unidadDeTrabajo.Profesores
                         .ObtenerEntidad(p => p.IdProfesor == oferta.IdProfesor)
