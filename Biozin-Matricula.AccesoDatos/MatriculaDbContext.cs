@@ -65,6 +65,9 @@ namespace Biozin_Matricula.AccesoDatos
                 .Property(o => o.Precio)
                 .HasColumnType("decimal(18,2)");
 
+            modelBuilder.Entity<OfertaAcademica>()
+                .ToTable(t => t.HasTrigger("tr_oferta_academica"));
+
             // Matricula relationships
             modelBuilder.Entity<Matricula>()
                 .HasOne(m => m.Estudiante)
