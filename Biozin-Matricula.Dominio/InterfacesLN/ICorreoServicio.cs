@@ -29,5 +29,31 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             string correoRemitente
         );
 
+        Task EnviarComprobanteMatriculaAsync(
+            string correoDestino,
+            string nombre,
+            long carnet,
+            string codigoCurso,
+            string nombreCurso,
+            string nombrePeriodo,
+            DateTime fechaMatricula,
+            decimal monto,
+            string nombreUniversidad,
+            string correoRemitente
+        );
+
+        Task EnviarComprobantePagoAsync(
+            string correoDestino,
+            string nombre,
+            long carnet,
+            int numeroPago,
+            string concepto,
+            string nombrePeriodo,
+            decimal monto,
+            DateTime fechaPago,
+            string nombreUniversidad,
+            string correoRemitente
+        );
+
     }
 }

@@ -8,10 +8,10 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<TPerfilEstudiante> ObtenerPerfil(int idEstudiante);
         Respuesta<TPerfilEstudiante> Login(TLoginEstudiante login);
         Respuesta<TMatricularPeriodo> ObtenerOfertasDisponibles(int idEstudiante);
-        Respuesta<bool> Matricular(int idEstudiante, int idOferta);
+        Task<Respuesta<bool>> Matricular(int idEstudiante, int idOferta);
         Respuesta<List<THistorialSemestre>> ObtenerHistorial(int idEstudiante);
         Respuesta<List<TPagoEstudiante>> ObtenerPagos(int idEstudiante);
-        Respuesta<bool> RealizarPago(int idEstudiante, int idPago);
+        Task<Respuesta<bool>> RealizarPago(int idEstudiante, int idPago);
         Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
     }
 }

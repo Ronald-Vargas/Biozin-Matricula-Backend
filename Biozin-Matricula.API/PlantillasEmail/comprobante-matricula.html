@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Matrícula</title>
+</head>
+
+<body style="margin:0; padding:0; background-color:#f4f6f9; font-family:Arial, Helvetica, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f9; padding:30px;">
+        <tr>
+            <td align="center">
+
+                <table width="600" cellpadding="0" cellspacing="0" style="background:white; border-radius:8px; overflow:hidden;">
+
+                    <!-- HEADER -->
+                    <tr>
+                        <td style="background:#0a3d62; padding:20px; text-align:center; color:white;">
+
+                            <img src="{logoUrl}" width="120" alt="{nombreUniversidad}" style="display:block; margin:0 auto;">
+
+                            <h2 style="margin:10px 0 0 0;">{nombreUniversidad}</h2>
+                            <p style="margin:5px 0;">Sistema de Gestión Académica</p>
+
+                        </td>
+                    </tr>
+
+                    <!-- BANNER COMPROBANTE -->
+                    <tr>
+                        <td style="background:#1a5276; padding:12px; text-align:center;">
+                            <span style="color:white; font-size:16px; font-weight:bold; letter-spacing:1px;">
+                                COMPROBANTE DE MATRÍCULA
+                            </span>
+                        </td>
+                    </tr>
+
+                    <!-- CONTENIDO -->
+                    <tr>
+                        <td style="padding:30px;">
+
+                            <p>Estimad@ <b>{nombre}</b>,</p>
+
+                            <p>
+                                Su matrícula ha sido registrada exitosamente. A continuación encontrará
+                                el detalle de su comprobante.
+                            </p>
+
+                            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:6px;">
+                                Información del Estudiante
+                            </h3>
+
+                            <table width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #ddd; border-collapse:collapse; margin-bottom:20px;">
+                                <tr>
+                                    <td style="width:40%; background:#f0f4f8;"><b>Nombre</b></td>
+                                    <td>{nombre}</td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f0f4f8;"><b>Carnet</b></td>
+                                    <td>{carnet}</td>
+                                </tr>
+                            </table>
+
+                            <h3 style="color:#0a3d62; border-bottom:2px solid #0a3d62; padding-bottom:6px;">
+                                Detalle de la Matrícula
+                            </h3>
+
+                            <table width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #ddd; border-collapse:collapse; margin-bottom:20px;">
+                                <tr>
+                                    <td style="width:40%; background:#f0f4f8;"><b>Período</b></td>
+                                    <td>{nombrePeriodo}</td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f0f4f8;"><b>Código del curso</b></td>
+                                    <td>{codigoCurso}</td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f0f4f8;"><b>Nombre del curso</b></td>
+                                    <td>{nombreCurso}</td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f0f4f8;"><b>Fecha de matrícula</b></td>
+                                    <td>{fechaMatricula}</td>
+                                </tr>
+                                <tr style="background:#e8f5e9;">
+                                    <td style="background:#c8e6c9;"><b>Monto a pagar</b></td>
+                                    <td><b style="color:#1b5e20;">₡ {monto}</b></td>
+                                </tr>
+                                <tr>
+                                    <td style="background:#f0f4f8;"><b>Estado del pago</b></td>
+                                    <td><span style="color:#e67e22; font-weight:bold;">Pendiente</span></td>
+                                </tr>
+                            </table>
+
+                            <p style="color:#555; font-size:13px;">
+                                Recuerde realizar el pago antes de la fecha de vencimiento para evitar recargos.
+                                Puede consultar y gestionar sus pagos desde el portal estudiantil.
+                            </p>
+
+                            <!-- BOTON -->
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center" style="padding-top:10px;">
+
+                                        <a href="{urlCampus}"
+                                           style="
+                                            background:#0a3d62;
+                                            color:white;
+                                            padding:12px 25px;
+                                            text-decoration:none;
+                                            border-radius:5px;
+                                            display:inline-block;
+                                            font-weight:bold;
+                                            ">
+                                            Ir al Portal Estudiantil
+                                        </a>
+
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="background:#f0f0f0; padding:20px; text-align:center; font-size:12px; color:#777;">
+
+                            <p>
+                                © {anio} {nombreUniversidad}
+                            </p>
+
+                            <p>
+                                Departamento de Registro
+                            </p>
+
+                            <p>
+                                Este es un correo automático, por favor no responder.
+                            </p>
+
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

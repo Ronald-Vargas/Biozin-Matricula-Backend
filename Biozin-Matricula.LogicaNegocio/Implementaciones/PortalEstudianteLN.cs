@@ -5,6 +5,7 @@ using Biozin_Matricula.Dominio.EntidadesTipadas;
 using Biozin_Matricula.Dominio.InterfacesAD;
 using Biozin_Matricula.Dominio.InterfacesLN;
 using Biozin_Matricula.Utilidades;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Biozin_Matricula.LogicaNegocio.Implementaciones
@@ -13,6 +14,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
     {
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly ILogger<PortalEstudianteLN> _logger;
+        private readonly ICorreoServicio _correo;
+        private readonly IConfiguration _config;
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -20,10 +23,12 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public PortalEstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<PortalEstudianteLN> logger)
+        public PortalEstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<PortalEstudianteLN> logger, ICorreoServicio correo, IConfiguration config)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _logger = logger;
+            _correo = correo;
+            _config = config;
         }
 
 
@@ -256,7 +261,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        public Respuesta<bool> Matricular(int idEstudiante, int idOferta)
+        public async Task<Respuesta<bool>> Matricular(int idEstudiante, int idOferta)
         {
             var resultado = new Respuesta<bool>();
             try
@@ -335,6 +340,31 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                 _unidadDeTrabajo.Pagos.Insertar(pago);
                 _unidadDeTrabajo.Completar();
+
+                // Enviar comprobante de matrícula por correo
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
+                    .ValorRetorno;
+
+                if (estudiante?.EmailPersonal != null)
+                {
+                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+
+                    await _correo.EnviarComprobanteMatriculaAsync(
+                        estudiante.EmailPersonal,
+                        $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                        estudiante.carnet,
+                        curso?.Codigo ?? "",
+                        curso?.Nombre ?? "Curso",
+                        periodo.Nombre,
+                        matricula.FechaMatricula,
+                        oferta.Precio,
+                        nombreUniversidad,
+                        correoRemitente
+                    );
+                }
 
                 resultado.ValorRetorno = true;
                 resultado.strMensajeRespuesta = "Matrícula realizada exitosamente";
@@ -506,7 +536,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        public Respuesta<bool> RealizarPago(int idEstudiante, int idPago)
+        public async Task<Respuesta<bool>> RealizarPago(int idEstudiante, int idPago)
         {
             var resultado = new Respuesta<bool>();
             try
@@ -542,6 +572,39 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 pago.FechaPago = DateTime.UtcNow;
                 _unidadDeTrabajo.Pagos.Modificar(pago);
                 _unidadDeTrabajo.Completar();
+
+                // Enviar comprobante de pago por correo
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
+                    .ValorRetorno;
+
+                if (estudiante?.EmailPersonal != null)
+                {
+                    var oferta = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidad(o => o.IdOferta == matricula.IdOferta)
+                        .ValorRetorno;
+
+                    var periodo = oferta != null
+                        ? _unidadDeTrabajo.Periodos.ObtenerEntidad(p => p.IdPeriodo == oferta.IdPeriodo).ValorRetorno
+                        : null;
+
+                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+
+                    await _correo.EnviarComprobantePagoAsync(
+                        estudiante.EmailPersonal,
+                        $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                        estudiante.carnet,
+                        pago.IdPago,
+                        pago.Concepto,
+                        periodo?.Nombre ?? "",
+                        pago.Monto,
+                        pago.FechaPago!.Value,
+                        nombreUniversidad,
+                        correoRemitente
+                    );
+                }
 
                 resultado.ValorRetorno = true;
                 resultado.strMensajeRespuesta = "Pago realizado exitosamente";

@@ -73,13 +73,13 @@ namespace Biozin_Matricula.API.Controladores
 
         [Authorize]
         [HttpPost("Matricular")]
-        public IActionResult Matricular([FromBody] TMatricularSolicitud solicitud)
+        public async Task<IActionResult> Matricular([FromBody] TMatricularSolicitud solicitud)
         {
             var idEstudiante = ObtenerIdEstudiante();
             if (idEstudiante == 0)
                 return Unauthorized();
 
-            return Ok(_ln.Matricular(idEstudiante, solicitud.IdOferta));
+            return Ok(await _ln.Matricular(idEstudiante, solicitud.IdOferta));
         }
 
 
@@ -121,13 +121,13 @@ namespace Biozin_Matricula.API.Controladores
 
         [Authorize]
         [HttpPost("Pagos/Pagar/{idPago}")]
-        public IActionResult RealizarPago(int idPago)
+        public async Task<IActionResult> RealizarPago(int idPago)
         {
             var idEstudiante = ObtenerIdEstudiante();
             if (idEstudiante == 0)
                 return Unauthorized();
 
-            return Ok(_ln.RealizarPago(idEstudiante, idPago));
+            return Ok(await _ln.RealizarPago(idEstudiante, idPago));
         }
 
 
