@@ -12,5 +12,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public bool TieneLaboratorio { get; set; }
         public decimal PrecioLaboratorio { get; set; }
         public int? idCursoRequisito { get; set; }
+        public int HorasDuracion { get; set; }
     }
 }

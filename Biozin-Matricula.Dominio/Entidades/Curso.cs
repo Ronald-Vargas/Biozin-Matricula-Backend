@@ -37,5 +37,8 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column ("idCursoRequisito")]
         public int? idCursoRequisito { get; set; }
 
+        [Column("horas_duracion")]
+        public int HorasDuracion { get; set; }
+
     }
 }

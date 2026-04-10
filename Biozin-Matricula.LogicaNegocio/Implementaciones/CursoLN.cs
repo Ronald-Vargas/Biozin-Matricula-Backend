@@ -64,6 +64,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.idCursoRequisito = curso.idCursoRequisito;
                     objDatos.ValorRetorno.TieneLaboratorio = curso.TieneLaboratorio;
                     objDatos.ValorRetorno.PrecioLaboratorio = curso.PrecioLaboratorio;
+                    objDatos.ValorRetorno.HorasDuracion = curso.HorasDuracion;
                     _unidadDeTrabajo.Cursos.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }

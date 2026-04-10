@@ -109,6 +109,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(y => y.IdOferta == oferta.IdOferta);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var matriculasAsociadas = _unidadDeTrabajo.Matriculas.ObtenerEntidad(m => m.IdOferta == oferta.IdOferta);
+                    if (matriculasAsociadas.ValorRetorno != null)
+                    {
+                        resultado.ValorRetorno = false;
+                        resultado.lpError("No permitido", "No se puede eliminar la oferta académica porque tiene matrículas asociadas.");
+                        return resultado;
+                    }
+
                     _unidadDeTrabajo.OfertasAcademicas.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;
