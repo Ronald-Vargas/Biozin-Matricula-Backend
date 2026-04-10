@@ -28,6 +28,17 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 var entidad = _mapper.Map<OfertaAcademica>(oferta);
 
+                // Verificar duplicado antes de insertar
+                var duplicado = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(x =>
+                    x.IdPeriodo == entidad.IdPeriodo &&
+                    x.IdCurso == entidad.IdCurso &&
+                    x.IdProfesor == entidad.IdProfesor);
+                if (duplicado.ValorRetorno != null)
+                {
+                    resultado.lpError("Duplicado", "Ya existe una oferta académica con ese periodo, curso y profesor.");
+                    return resultado;
+                }
+
                 // Get Precio from Curso if not provided
                 if (entidad.Precio == 0)
                 {
