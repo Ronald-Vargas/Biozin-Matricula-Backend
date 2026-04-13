@@ -48,6 +48,11 @@ builder.Services.AddScoped<IPortalEstudianteLN, PortalEstudianteLN>();
 builder.Services.AddScoped<IAdministradorLN, AdministradorLN>();
 builder.Services.AddScoped<ILogActividadServicio, LogActividadServicio>();
 
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IDateTimeProvider, DateTimeProviderConfigurable>();
+else
+    builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(options =>

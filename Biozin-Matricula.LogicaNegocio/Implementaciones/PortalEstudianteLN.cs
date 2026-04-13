@@ -17,6 +17,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly ICorreoServicio _correo;
         private readonly IConfiguration _config;
         private readonly ILogActividadServicio _log;
+        private readonly IDateTimeProvider _tiempo;
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
@@ -24,13 +25,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public PortalEstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<PortalEstudianteLN> logger, ICorreoServicio correo, IConfiguration config, ILogActividadServicio log)
+        public PortalEstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, ILogger<PortalEstudianteLN> logger, ICorreoServicio correo, IConfiguration config, ILogActividadServicio log, IDateTimeProvider tiempo)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _logger = logger;
             _correo = correo;
             _config = config;
             _log = log;
+            _tiempo = tiempo;
         }
 
 
@@ -223,6 +225,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
+                var ahora = _tiempo.Ahora;
+                if (ahora < periodo.FechaMatriculaInicio || ahora > periodo.FechaMatriculaFin)
+                {
+                    resultado.strMensajeRespuesta =
+                        $"La matrícula estará disponible del {periodo.FechaMatriculaInicio:dd/MM/yyyy} al {periodo.FechaMatriculaFin:dd/MM/yyyy}";
+                    return resultado;
+                }
+
                 // Carrera del estudiante
                 var estudiante = _unidadDeTrabajo.Estudiantes
                     .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
@@ -375,6 +385,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 if (periodo == null)
                 {
                     resultado.lpError("Error", "No hay un período de matrícula activo");
+                    return resultado;
+                }
+
+                var ahora = _tiempo.Ahora;
+                if (ahora < periodo.FechaMatriculaInicio || ahora > periodo.FechaMatriculaFin)
+                {
+                    resultado.lpError("Error",
+                        $"La matrícula estará disponible del {periodo.FechaMatriculaInicio:dd/MM/yyyy} al {periodo.FechaMatriculaFin:dd/MM/yyyy}");
                     return resultado;
                 }
 
