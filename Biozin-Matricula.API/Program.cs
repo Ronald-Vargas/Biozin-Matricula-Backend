@@ -46,6 +46,7 @@ builder.Services.AddScoped<ICorreoServicio, CorreoServicio>();
 builder.Services.AddScoped<IAulaLN, AulaLN>();
 builder.Services.AddScoped<IPortalEstudianteLN, PortalEstudianteLN>();
 builder.Services.AddScoped<IAdministradorLN, AdministradorLN>();
+builder.Services.AddScoped<ILogActividadServicio, LogActividadServicio>();
 
 // JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"]!;

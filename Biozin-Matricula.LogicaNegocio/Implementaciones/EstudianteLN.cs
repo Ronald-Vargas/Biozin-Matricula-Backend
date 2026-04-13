@@ -17,14 +17,16 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly ILogger<EstudianteLN> _logger;
         private readonly ICorreoServicio _correo;
         private readonly IConfiguration _config;
+        private readonly ILogActividadServicio _log;
 
-        public EstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<EstudianteLN> logger, ICorreoServicio correo, IConfiguration config)
+        public EstudianteLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<EstudianteLN> logger, ICorreoServicio correo, IConfiguration config, ILogActividadServicio log)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
             _correo = correo;
             _config = config;
+            _log = log;
         }
 
         public async Task<Respuesta<TCredencialesEstudiante>> Insertar(TEstudiante estudiante)
@@ -65,6 +67,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     _unidadDeTrabajo.Estudiantes.Insertar(entidad);
                     _unidadDeTrabajo.Completar();
+
+                    _log.Registrar("estudiante", $"Se registró el estudiante {estudiante.Nombre} {estudiante.ApellidoPaterno}", "👨‍🎓");
 
                     var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                     var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";

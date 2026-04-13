@@ -10,7 +10,13 @@ namespace Biozin_Matricula.API.Controladores
     public class AdministradorController : ControllerBase
     {
         private readonly IAdministradorLN _ln;
-        public AdministradorController(IAdministradorLN ln) => _ln = ln;
+        private readonly ILogActividadServicio _log;
+
+        public AdministradorController(IAdministradorLN ln, ILogActividadServicio log)
+        {
+            _ln = ln;
+            _log = log;
+        }
 
 
         [HttpPost("Insertar")]
@@ -30,5 +36,8 @@ namespace Biozin_Matricula.API.Controladores
 
         [HttpGet("Listar")]
         public IActionResult Listar() => Ok(_ln.Listar());
+
+        [HttpGet("ActividadReciente")]
+        public IActionResult ActividadReciente() => Ok(_log.ObtenerRecientes(20));
     }
 }

@@ -13,12 +13,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
         private readonly ILogger<CursoLN> _logger;
+        private readonly ILogActividadServicio _log;
 
-        public CursoLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<CursoLN> logger)
+        public CursoLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<CursoLN> logger, ILogActividadServicio log)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
+            _log = log;
         }
 
         public Respuesta<int> Insertar(TCurso curso)
@@ -32,6 +34,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var entidad = _mapper.Map<Curso>(curso);
                     _unidadDeTrabajo.Cursos.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                    _log.Registrar("curso", $"Se creó el curso {curso.Nombre}", "📖");
                 }
                 else
                 {

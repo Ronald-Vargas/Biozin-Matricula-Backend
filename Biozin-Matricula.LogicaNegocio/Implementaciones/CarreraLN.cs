@@ -13,12 +13,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
         private readonly IUnidadTrabajoEF _unidadDeTrabajo;
         private readonly IMapper _mapper;
         private readonly ILogger<CarreraLN> _logger;
+        private readonly ILogActividadServicio _log;
 
-        public CarreraLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<CarreraLN> logger)
+        public CarreraLN(IUnidadTrabajoEF unidadDeTrabajo, IMapper mapper, ILogger<CarreraLN> logger, ILogActividadServicio log)
         {
             _unidadDeTrabajo = unidadDeTrabajo;
             _mapper = mapper;
             _logger = logger;
+            _log = log;
         }
 
         public Respuesta<int> Insertar(TCarrera carrera)
@@ -32,6 +34,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var entidad = _mapper.Map<Carrera>(carrera);
                     _unidadDeTrabajo.Carreras.Insertar(entidad);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
+                    _log.Registrar("carrera", $"Se creó la carrera {carrera.Nombre}", "🎓");
                 }
                 else
                 {

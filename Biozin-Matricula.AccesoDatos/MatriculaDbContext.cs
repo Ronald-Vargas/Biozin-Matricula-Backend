@@ -26,6 +26,9 @@ namespace Biozin_Matricula.AccesoDatos
         {
             base.OnModelCreating(modelBuilder);
 
+            // Tabla creada manualmente — EF solo la usa para consultas, no la gestiona en migraciones
+            modelBuilder.Entity<LogActividad>().ToTable("log_actividad").HasKey(l => l.IdLog);
+
             modelBuilder.Entity<OfertaAcademica>()
                 .HasOne(o => o.Periodo)
                 .WithMany()
