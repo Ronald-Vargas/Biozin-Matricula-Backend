@@ -26,7 +26,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public DateTime FechaMatriculaFin { get; set; }
 
         [Column("estado_matricula")]
-        public bool EstadoMatricula { get; set; } = false;
+        public bool EstadoMatricula { get; set; } = true;
 
     }
 }

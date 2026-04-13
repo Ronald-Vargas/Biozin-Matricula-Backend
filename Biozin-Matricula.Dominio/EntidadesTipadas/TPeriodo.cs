@@ -8,6 +8,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public DateTime FechaFin { get; set; }
         public DateTime FechaMatriculaInicio { get; set; }
         public DateTime FechaMatriculaFin { get; set; }
-        public bool EstadoMatricula { get; set; } = false;
+        public bool EstadoMatricula { get; set; } = true;
     }
 }
