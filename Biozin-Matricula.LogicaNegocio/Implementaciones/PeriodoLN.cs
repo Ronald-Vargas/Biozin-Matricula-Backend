@@ -26,7 +26,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<int>();
             try
             {
-                var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.IdPeriodo == periodo.IdPeriodo);
+                var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.Nombre.ToLower() == periodo.Nombre.ToLower().Trim());
                 if (objDatos.ValorRetorno == null)
                 {
                     var entidad = _mapper.Map<Periodo>(periodo);
@@ -36,7 +36,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 else
                 {
                     resultado.ValorRetorno = -1;
-                    resultado.strMensajeRespuesta = "El periodo ya se encuentra registrado";
+                    resultado.strMensajeRespuesta = "Ya existe un periodo con ese nombre";
                 }
             }
             catch (Exception ex)

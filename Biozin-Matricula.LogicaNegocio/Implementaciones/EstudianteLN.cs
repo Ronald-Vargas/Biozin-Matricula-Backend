@@ -41,16 +41,30 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var baseEmail = GeneradorCredenciales.GenerarBaseEmail(estudiante.Nombre, estudiante.ApellidoPaterno);
                     var email = GeneradorCredenciales.ConstruirEmailEstudiante(baseEmail);
                     int sufijo = 2;
+                    const int maxIntentosEmail = 100;
+                    int intentosEmail = 0;
                     while (_unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.EmailInstitucional == email).ValorRetorno != null)
                     {
+                        if (++intentosEmail >= maxIntentosEmail)
+                        {
+                            resultado.lpError("Error al Insertar", "No se pudo generar un email institucional único. Contacte al administrador.");
+                            return resultado;
+                        }
                         email = GeneradorCredenciales.ConstruirEmailEstudiante(baseEmail, sufijo);
                         sufijo++;
                     }
 
                     // Generar carnet único
                     var carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
+                    const int maxIntentosCarnet = 100;
+                    int intentosCarnet = 0;
                     while (_unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.carnet == carnet).ValorRetorno != null)
                     {
+                        if (++intentosCarnet >= maxIntentosCarnet)
+                        {
+                            resultado.lpError("Error al Insertar", "No se pudo generar un carnet único. Contacte al administrador.");
+                            return resultado;
+                        }
                         carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
                     }
 

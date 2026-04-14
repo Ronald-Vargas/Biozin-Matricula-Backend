@@ -39,8 +39,15 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var baseEmail = GeneradorCredenciales.GenerarBaseEmail(profesor.Nombre, profesor.ApellidoPaterno);
                     var email = GeneradorCredenciales.ConstruirEmail(baseEmail);
                     int sufijo = 2;
+                    const int maxIntentosEmail = 100;
+                    int intentosEmail = 0;
                     while (_unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.EmailInstitucional == email).ValorRetorno != null)
                     {
+                        if (++intentosEmail >= maxIntentosEmail)
+                        {
+                            resultado.lpError("Error al Insertar", "No se pudo generar un email institucional único. Contacte al administrador.");
+                            return resultado;
+                        }
                         email = GeneradorCredenciales.ConstruirEmail(baseEmail, sufijo);
                         sufijo++;
                     }
