@@ -99,16 +99,23 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                if (!BCrypt.Net.BCrypt.Verify(datos.ContrasenaTemporal, estudiante.Contrasena))
+                if (estudiante.RequiereCambioContrasena)
                 {
-                    resultado.lpError("Error", "La contraseña temporal es incorrecta.");
-                    return resultado;
+                    // Primer inicio de sesión: validar contraseña temporal con BCrypt
+                    if (!BCrypt.Net.BCrypt.Verify(datos.ContrasenaTemporal, estudiante.Contrasena))
+                    {
+                        resultado.lpError("Error", "La contraseña temporal es incorrecta.");
+                        return resultado;
+                    }
                 }
-
-                if (datos.NuevaContrasena == datos.ContrasenaTemporal)
+                else
                 {
-                    resultado.lpError("Error", "La nueva contraseña no puede ser igual a la temporal.");
-                    return resultado;
+                    // Recuperación por olvido: validar código de recuperación
+                    if (!RecuperacionCodigos.Validar(datos.Email, datos.ContrasenaTemporal))
+                    {
+                        resultado.lpError("Error", "El código de recuperación es inválido o ha expirado.");
+                        return resultado;
+                    }
                 }
 
                 estudiante.Contrasena = BCrypt.Net.BCrypt.HashPassword(datos.NuevaContrasena);
@@ -123,6 +130,49 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 _logger.LogError("Error CambiarContrasenaTemporaria: {0}", ex.Message);
                 resultado.lpError("Error", "Ocurrió un error al procesar la solicitud.");
+            }
+            return resultado;
+        }
+
+        public async Task<Respuesta<object>> SolicitarRecuperacion(string email)
+        {
+            var resultado = new Respuesta<object>();
+            try
+            {
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.EmailInstitucional == email)
+                    .ValorRetorno;
+
+                if (estudiante == null)
+                {
+                    resultado.lpError("Error", "No se encontró una cuenta con ese correo.");
+                    return resultado;
+                }
+
+                var codigo = RecuperacionCodigos.Generar(email);
+                var nombreUniversidad = _config["Mail:NombreUniversidad"] ?? "Biozin";
+                var correoRemitente = _config["Mail:Remitente"] ?? _config["Mail:Usuario"] ?? "";
+
+                // Enviar al correo personal del estudiante si existe, si no al institucional
+                var correoDestino = !string.IsNullOrEmpty(estudiante.EmailPersonal)
+                    ? estudiante.EmailPersonal
+                    : estudiante.EmailInstitucional;
+
+                await _correo.EnviarCodigoRecuperacionAsync(
+                    correoDestino!,
+                    $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                    codigo,
+                    nombreUniversidad,
+                    correoRemitente
+                );
+
+                resultado.strTituloRespuesta = "Código enviado";
+                resultado.strMensajeRespuesta = "Se envió un código de recuperación a tu correo.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error SolicitarRecuperacion Estudiante: {0}", ex.Message);
+                resultado.lpError("Error", "No se pudo enviar el código. Intenta de nuevo.");
             }
             return resultado;
         }

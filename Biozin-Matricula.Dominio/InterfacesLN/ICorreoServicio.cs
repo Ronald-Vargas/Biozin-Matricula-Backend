@@ -55,5 +55,13 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             string correoRemitente
         );
 
+        Task EnviarCodigoRecuperacionAsync(
+            string correoDestino,
+            string nombre,
+            string codigo,
+            string nombreUniversidad,
+            string correoRemitente
+        );
+
     }
 }

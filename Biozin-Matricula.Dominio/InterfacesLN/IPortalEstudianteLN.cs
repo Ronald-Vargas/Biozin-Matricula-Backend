@@ -13,5 +13,6 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<List<TPagoEstudiante>> ObtenerPagos(int idEstudiante);
         Task<Respuesta<bool>> RealizarPago(int idEstudiante, int idPago);
         Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
+        Task<Respuesta<object>> SolicitarRecuperacion(string email);
     }
 }

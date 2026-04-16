@@ -292,5 +292,43 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             await smtp.SendAsync(mensaje);
             await smtp.DisconnectAsync(true);
         }
+
+        public async Task EnviarCodigoRecuperacionAsync(
+            string correoDestino,
+            string nombre,
+            string codigo,
+            string nombreUniversidad,
+            string correoRemitente)
+        {
+            var mensaje = new MimeMessage();
+            mensaje.From.Add(new MailboxAddress(nombreUniversidad, correoRemitente));
+            mensaje.To.Add(MailboxAddress.Parse(correoDestino));
+            mensaje.Subject = "Código de recuperación de contraseña";
+
+            var builder = new BodyBuilder();
+            builder.HtmlBody = $@"
+<div style='font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;'>
+  <h2 style='color:#1e3a5f;margin-bottom:8px;'>{nombreUniversidad}</h2>
+  <p style='color:#374151;'>Hola <strong>{nombre}</strong>,</p>
+  <p style='color:#374151;'>Recibimos una solicitud para restablecer tu contraseña. Usa el siguiente código:</p>
+  <div style='text-align:center;margin:32px 0;'>
+    <span style='font-size:40px;font-weight:bold;letter-spacing:10px;color:#06b6d4;background:#e0f7fa;padding:16px 32px;border-radius:8px;'>{codigo}</span>
+  </div>
+  <p style='color:#6b7280;font-size:13px;'>Este código expira en <strong>15 minutos</strong>. Si no solicitaste este cambio, ignora este correo.</p>
+  <p style='color:#6b7280;font-size:12px;margin-top:24px;'>© {DateTime.Now.Year} {nombreUniversidad}</p>
+</div>";
+
+            mensaje.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(
+                _config["Mail:Smtp"],
+                int.Parse(_config["Mail:Puerto"]),
+                MailKit.Security.SecureSocketOptions.StartTls
+            );
+            await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
+            await smtp.SendAsync(mensaje);
+            await smtp.DisconnectAsync(true);
+        }
     }
 }

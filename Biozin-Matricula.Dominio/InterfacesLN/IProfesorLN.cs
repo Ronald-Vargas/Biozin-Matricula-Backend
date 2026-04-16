@@ -13,5 +13,6 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<IEnumerable<TProfesor>> Listar();
         Respuesta<TProfesor> Login(string email, string contrasena);
         Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
+        Task<Respuesta<object>> SolicitarRecuperacion(string email);
     }
 }
