@@ -18,9 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="PlantillasEmail\Biozin_logo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="PlantillasEmail\credenciales.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
