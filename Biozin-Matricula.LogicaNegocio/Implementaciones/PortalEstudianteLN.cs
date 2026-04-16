@@ -172,12 +172,18 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     }
                 }
 
-                // Calcular créditos: pagados = completados, sin pagar = en curso
+                // Calcular créditos según el estado académico de la matrícula
                 var todasLasMatriculas = _unidadDeTrabajo.Matriculas
                     .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
                     .ValorRetorno ?? Enumerable.Empty<Matricula>();
 
+                // Período activo: aquel marcado con EstadoMatricula = true
+                var periodoActual = _unidadDeTrabajo.Periodos
+                    .ObtenerEntidad(p => p.EstadoMatricula == true)
+                    .ValorRetorno;
+
                 int creditosAprobados = 0;
+                int creditosMatriculados = 0;
                 int creditosEnCurso = 0;
 
                 foreach (var mat in todasLasMatriculas)
@@ -194,14 +200,15 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     if (curso == null) continue;
 
-                    var pago = _unidadDeTrabajo.Pagos
-                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula)
-                        .ValorRetorno;
+                    // Total de todos los créditos llevados (todos los períodos)
+                    creditosMatriculados += curso.Creditos;
 
-                    if (pago?.Estado == "pagado")
-                        creditosAprobados += curso.Creditos;
-                    else
+                    if (periodoActual != null && oferta.IdPeriodo == periodoActual.IdPeriodo)
+                        // Período actual → en curso
                         creditosEnCurso += curso.Creditos;
+                    else
+                        // Períodos pasados → aprobados (igual que el historial)
+                        creditosAprobados += curso.Creditos;
                 }
 
                 resultado.ValorRetorno = new TPerfilEstudiante
@@ -215,6 +222,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     SemestreActual = estudiante.SemestreActual,
                     EmailInstitucional = estudiante.EmailInstitucional,
                     CreditosAprobados = creditosAprobados,
+                    CreditosMatriculados = creditosMatriculados,
                     CreditosEnCurso = creditosEnCurso,
                     CreditosTotales = creditosTotales
                 };

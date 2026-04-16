@@ -12,6 +12,7 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string? EmailInstitucional { get; set; }
         public bool RequiereCambioContrasena { get; set; }
         public int CreditosAprobados { get; set; }
+        public int CreditosMatriculados { get; set; }
         public int CreditosEnCurso { get; set; }
         public int? CreditosTotales { get; set; }
     }
