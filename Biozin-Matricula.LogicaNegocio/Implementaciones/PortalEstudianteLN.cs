@@ -475,6 +475,50 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     }
                 }
 
+                // Verificar choque de horario con cursos ya matriculados en el período actual
+                if (!string.IsNullOrEmpty(oferta.DiasHorarios))
+                {
+                    var horariosNuevos = JsonSerializer.Deserialize<List<TDiaHorario>>(oferta.DiasHorarios, _jsonOptions)
+                                         ?? new List<TDiaHorario>();
+
+                    foreach (var mat in todasLasMatriculas.Where(m => idsOfertasPeriodoActual.Contains(m.IdOferta)))
+                    {
+                        var ofertaMat = _unidadDeTrabajo.OfertasAcademicas
+                            .ObtenerEntidad(o => o.IdOferta == mat.IdOferta)
+                            .ValorRetorno;
+
+                        if (ofertaMat == null || string.IsNullOrEmpty(ofertaMat.DiasHorarios)) continue;
+
+                        var horariosExistentes = JsonSerializer.Deserialize<List<TDiaHorario>>(ofertaMat.DiasHorarios, _jsonOptions)
+                                                 ?? new List<TDiaHorario>();
+
+                        foreach (var slotNuevo in horariosNuevos)
+                        {
+                            foreach (var slotExistente in horariosExistentes)
+                            {
+                                if (!string.Equals(slotNuevo.Dia, slotExistente.Dia, StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                if (TimeSpan.TryParse(slotNuevo.HoraInicio, out var inicioNuevo) &&
+                                    TimeSpan.TryParse(slotNuevo.HoraFin, out var finNuevo) &&
+                                    TimeSpan.TryParse(slotExistente.HoraInicio, out var inicioExistente) &&
+                                    TimeSpan.TryParse(slotExistente.HoraFin, out var finExistente))
+                                {
+                                    if (inicioNuevo < finExistente && finNuevo > inicioExistente)
+                                    {
+                                        var cursoCon = _unidadDeTrabajo.Cursos
+                                            .ObtenerEntidad(c => c.IdCurso == ofertaMat.IdCurso)
+                                            .ValorRetorno;
+                                        resultado.lpError("Choque de horario",
+                                            $"El horario choca con {cursoCon?.Nombre ?? "otro curso"} el {slotNuevo.Dia} de {slotExistente.HoraInicio} a {slotExistente.HoraFin}");
+                                        return resultado;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Verificar que el estudiante no ya llevó este curso (pagado en período anterior)
                 var matriculasPeriodosAnteriores = todasLasMatriculas
                     .Where(m => !idsOfertasPeriodoActual.Contains(m.IdOferta))
