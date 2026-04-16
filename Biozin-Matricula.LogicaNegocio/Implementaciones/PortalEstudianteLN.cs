@@ -154,6 +154,24 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     ? _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == estudiante.IdCarrera.Value).ValorRetorno
                     : null;
 
+                // Créditos totales de la carrera (suma de créditos de todos sus cursos)
+                int creditosTotales = 0;
+                if (estudiante.IdCarrera.HasValue)
+                {
+                    var cursosCarrera = _unidadDeTrabajo.CarreraCursos
+                        .ObtenerEntidades(cc => cc.IdCarrera == estudiante.IdCarrera.Value)
+                        .ValorRetorno ?? Enumerable.Empty<CarreraCurso>();
+
+                    foreach (var cc in cursosCarrera)
+                    {
+                        var curso = _unidadDeTrabajo.Cursos
+                            .ObtenerEntidad(c => c.IdCurso == cc.IdCurso)
+                            .ValorRetorno;
+                        if (curso != null)
+                            creditosTotales += curso.Creditos;
+                    }
+                }
+
                 // Calcular créditos: pagados = completados, sin pagar = en curso
                 var todasLasMatriculas = _unidadDeTrabajo.Matriculas
                     .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
@@ -198,7 +216,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     EmailInstitucional = estudiante.EmailInstitucional,
                     CreditosAprobados = creditosAprobados,
                     CreditosEnCurso = creditosEnCurso,
-                    CreditosTotales = carrera?.Duracion
+                    CreditosTotales = creditosTotales
                 };
             }
             catch (Exception ex)
