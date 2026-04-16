@@ -35,6 +35,9 @@ namespace Biozin_Matricula.API.Controladores
         [HttpPost("Login")]
         public IActionResult Login([FromBody] TLoginRequest login)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new Respuesta<TAuthRespuesta> { blnError = true, strTituloRespuesta = "Datos inválidos", strMensajeRespuesta = "El correo y la contraseña son obligatorios." });
+
             var dominio = ObtenerDominio(login.Email);
 
             return dominio switch
@@ -49,6 +52,9 @@ namespace Biozin_Matricula.API.Controladores
         [HttpPost("SolicitarRecuperacion")]
         public async Task<IActionResult> SolicitarRecuperacion([FromBody] TSolicitarRecuperacion obj)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new Respuesta<object> { blnError = true, strTituloRespuesta = "Datos inválidos", strMensajeRespuesta = "El correo es obligatorio." });
+
             var dominio = ObtenerDominio(obj.Email);
 
             return dominio switch
@@ -63,6 +69,9 @@ namespace Biozin_Matricula.API.Controladores
         [HttpPost("CambiarContrasenaTemporaria")]
         public IActionResult CambiarContrasenaTemporaria([FromBody] TCambioContrasena obj)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(new Respuesta<object> { blnError = true, strTituloRespuesta = "Datos inválidos", strMensajeRespuesta = "El correo, la contraseña temporal y la nueva contraseña son obligatorios." });
+
             var dominio = ObtenerDominio(obj.Email);
 
             return dominio switch

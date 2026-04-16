@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Biozin_Matricula.API.Controladores
 {
+    [Authorize(Roles = "Estudiante")]
     [ApiController]
     [Route("api/[controller]")]
     public class PortalEstudianteController : ControllerBase
@@ -33,7 +34,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpGet("Perfil")]
         public IActionResult ObtenerPerfil()
         {
@@ -53,7 +53,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpGet("Matricular/Ofertas")]
         public IActionResult ObtenerOfertasDisponibles()
         {
@@ -71,7 +70,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpPost("Matricular")]
         public async Task<IActionResult> Matricular([FromBody] TMatricularSolicitud solicitud)
         {
@@ -87,7 +85,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpGet("Historial")]
         public IActionResult ObtenerHistorial()
         {
@@ -104,7 +101,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpGet("Pagos")]
         public IActionResult ObtenerPagos()
         {
@@ -119,7 +115,6 @@ namespace Biozin_Matricula.API.Controladores
 
 
 
-        [Authorize]
         [HttpPost("Pagos/Pagar/{idPago}")]
         public async Task<IActionResult> RealizarPago(int idPago)
         {

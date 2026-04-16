@@ -1,14 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Biozin_Matricula.Dominio.EntidadesTipadas
 {
     public class TSolicitarRecuperacion
     {
-        public string Email { get; set; } = string.Empty;
+        [Required] public string Email { get; set; } = string.Empty;
     }
 
     public class TLoginRequest
     {
-        public string Email { get; set; } = string.Empty;
-        public string Contrasena { get; set; } = string.Empty;
+        [Required] public string Email { get; set; } = string.Empty;
+        [Required] public string Contrasena { get; set; } = string.Empty;
     }
 
     public class TAuthRespuesta

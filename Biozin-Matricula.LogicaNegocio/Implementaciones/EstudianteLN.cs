@@ -84,20 +84,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     _log.Registrar("estudiante", $"Se registró el estudiante {estudiante.Nombre} {estudiante.ApellidoPaterno}", "👨‍🎓");
 
-                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
-                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
-                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
-
-                    await _correo.EnviarCredencialesAsync(
-                        estudiante.EmailPersonal,
-                        estudiante.Nombre,
-                        carnet,
-                        email,
-                        contrasenaTxt,
-                        nombreUniversidad,
-                        correoRemitente
-                    );
-
                     resultado.ValorRetorno = new TCredencialesEstudiante
                     {
                         IdEstudiante = entidad.IdEstudiante,
@@ -105,6 +91,28 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         EmailInstitucional = email,
                         ContrasenaGenerada = contrasenaTxt
                     };
+
+                    try
+                    {
+                        var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                        var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                        var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+
+                        await _correo.EnviarCredencialesAsync(
+                            estudiante.EmailPersonal,
+                            estudiante.Nombre,
+                            carnet,
+                            email,
+                            contrasenaTxt,
+                            nombreUniversidad,
+                            correoRemitente
+                        );
+                    }
+                    catch (Exception exCorreo)
+                    {
+                        _logger.LogWarning("No se pudo enviar el correo al estudiante {0}: {1}", email, exCorreo.Message);
+                        resultado.strMensajeRespuesta = "Estudiante creado, pero no se pudo enviar el correo con las credenciales.";
+                    }
                 }
                 else
                 {
