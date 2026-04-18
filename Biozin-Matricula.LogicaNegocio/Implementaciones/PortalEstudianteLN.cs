@@ -256,8 +256,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     if (periodoActual != null && oferta.IdPeriodo == periodoActual.IdPeriodo)
                         // Período actual → en curso
                         creditosEnCurso += curso.Creditos;
-                    else
-                        // Períodos pasados → aprobados (igual que el historial)
+                    else if (mat.Estado == "aprobado")
+                        // Períodos pasados → solo aprobados
                         creditosAprobados += curso.Creditos;
                 }
 
