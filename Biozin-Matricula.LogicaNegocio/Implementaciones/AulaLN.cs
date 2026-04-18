@@ -56,12 +56,24 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Aulas.ObtenerEntidad(y => y.IdAula == aula.IdAula);
                 if (objDatos.ValorRetorno != null)
                 {
+                    // Bloquear desactivación si tiene ofertas activas
+                    if (!aula.Activo && objDatos.ValorRetorno.Activo)
+                    {
+                        var ofertasActivas = _unidadDeTrabajo.OfertasAcademicas
+                            .ObtenerEntidades(o => o.IdAula == aula.IdAula && o.Estado).ValorRetorno;
+                        if (ofertasActivas != null && ofertasActivas.Any())
+                        {
+                            resultado.lpError("No permitido", $"No se puede desactivar el aula porque está asignada a {ofertasActivas.Count()} oferta(s) activa(s).");
+                            return resultado;
+                        }
+                    }
+
                     objDatos.ValorRetorno.NumeroAula = aula.NumeroAula;
                     objDatos.ValorRetorno.Capacidad = aula.Capacidad;
                     objDatos.ValorRetorno.Descripcion = aula.Descripcion;
                     objDatos.ValorRetorno.EsLaboratorio = aula.EsLaboratorio;
                     objDatos.ValorRetorno.Activo = aula.Activo;
-                   
+
                     _unidadDeTrabajo.Aulas.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
@@ -87,6 +99,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Aulas.ObtenerEntidad(y => y.IdAula == aula.IdAula);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var enUso = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => o.IdAula == aula.IdAula).ValorRetorno;
+                    if (enUso != null && enUso.Any())
+                    {
+                        resultado.lpError("No permitido", "No se puede eliminar el aula porque está asociada a una o más ofertas académicas.");
+                        return resultado;
+                    }
+
                     _unidadDeTrabajo.Aulas.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;

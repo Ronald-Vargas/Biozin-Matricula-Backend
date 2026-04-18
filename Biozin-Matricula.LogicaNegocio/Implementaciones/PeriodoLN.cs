@@ -86,6 +86,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Periodos.ObtenerEntidad(y => y.IdPeriodo == periodo.IdPeriodo);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var enUso = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => o.IdPeriodo == periodo.IdPeriodo).ValorRetorno;
+                    if (enUso != null && enUso.Any())
+                    {
+                        resultado.lpError("No permitido", "No se puede eliminar el período porque tiene ofertas académicas asociadas.");
+                        return resultado;
+                    }
+
                     _unidadDeTrabajo.Periodos.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;

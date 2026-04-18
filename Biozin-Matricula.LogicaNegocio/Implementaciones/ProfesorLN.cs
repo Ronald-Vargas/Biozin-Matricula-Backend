@@ -107,6 +107,18 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.IdProfesor == profesor.IdProfesor);
                 if (objDatos.ValorRetorno != null)
                 {
+                    // Bloquear desactivación si tiene ofertas activas
+                    if (!profesor.Estado && objDatos.ValorRetorno.Estado)
+                    {
+                        var ofertasActivas = _unidadDeTrabajo.OfertasAcademicas
+                            .ObtenerEntidades(o => o.IdProfesor == profesor.IdProfesor && o.Estado).ValorRetorno;
+                        if (ofertasActivas != null && ofertasActivas.Any())
+                        {
+                            resultado.lpError("No permitido", $"No se puede desactivar el profesor porque tiene {ofertasActivas.Count()} oferta(s) activa(s) asignadas.");
+                            return resultado;
+                        }
+                    }
+
                     objDatos.ValorRetorno.Cedula = profesor.Cedula;
                     objDatos.ValorRetorno.Nombre = profesor.Nombre;
                     objDatos.ValorRetorno.ApellidoPaterno = profesor.ApellidoPaterno;
@@ -149,6 +161,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Profesores.ObtenerEntidad(y => y.IdProfesor == profesor.IdProfesor);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var enUso = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => o.IdProfesor == profesor.IdProfesor).ValorRetorno;
+                    if (enUso != null && enUso.Any())
+                    {
+                        resultado.lpError("No permitido", "No se puede eliminar el profesor porque está asignado a una o más ofertas académicas.");
+                        return resultado;
+                    }
+
                     _unidadDeTrabajo.Profesores.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;

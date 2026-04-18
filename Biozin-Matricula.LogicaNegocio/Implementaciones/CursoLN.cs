@@ -58,6 +58,24 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Cursos.ObtenerEntidad(y => y.IdCurso == curso.IdCurso);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var ofertasActivas = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => o.IdCurso == curso.IdCurso && o.Estado).ValorRetorno;
+                    bool tieneOfertasActivas = ofertasActivas != null && ofertasActivas.Any();
+
+                    // Bloquear desactivación si tiene ofertas activas
+                    if (!curso.Estado && objDatos.ValorRetorno.Estado && tieneOfertasActivas)
+                    {
+                        resultado.lpError("No permitido", $"No se puede desactivar el curso porque tiene {ofertasActivas!.Count()} oferta(s) activa(s).");
+                        return resultado;
+                    }
+
+                    // Bloquear cambio de modalidad (virtual/presencial) si tiene ofertas activas
+                    if (curso.EsVirtual != objDatos.ValorRetorno.EsVirtual && tieneOfertasActivas)
+                    {
+                        resultado.lpError("No permitido", "No se puede cambiar la modalidad del curso (virtual/presencial) mientras tenga ofertas académicas activas.");
+                        return resultado;
+                    }
+
                     objDatos.ValorRetorno.Codigo = curso.Codigo;
                     objDatos.ValorRetorno.Creditos = curso.Creditos;
                     objDatos.ValorRetorno.Nombre = curso.Nombre;
@@ -68,6 +86,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.TieneLaboratorio = curso.TieneLaboratorio;
                     objDatos.ValorRetorno.PrecioLaboratorio = curso.PrecioLaboratorio;
                     objDatos.ValorRetorno.HorasDuracion = curso.HorasDuracion;
+                    objDatos.ValorRetorno.EsVirtual = curso.EsVirtual;
                     _unidadDeTrabajo.Cursos.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
@@ -93,6 +112,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var objDatos = _unidadDeTrabajo.Cursos.ObtenerEntidad(y => y.IdCurso == curso.IdCurso);
                 if (objDatos.ValorRetorno != null)
                 {
+                    var enUso = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidades(o => o.IdCurso == curso.IdCurso).ValorRetorno;
+                    if (enUso != null && enUso.Any())
+                    {
+                        resultado.lpError("No permitido", "No se puede eliminar el curso porque está asociado a una o más ofertas académicas.");
+                        return resultado;
+                    }
+
                     _unidadDeTrabajo.Cursos.Eliminar(objDatos.ValorRetorno);
                     _unidadDeTrabajo.Completar();
                     resultado.ValorRetorno = true;

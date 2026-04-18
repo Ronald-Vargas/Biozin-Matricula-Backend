@@ -45,6 +45,7 @@ builder.Services.AddScoped<IAjustesLN, AjustesLN>();
 builder.Services.AddScoped<ICorreoServicio, CorreoServicio>();
 builder.Services.AddScoped<IAulaLN, AulaLN>();
 builder.Services.AddScoped<IPortalEstudianteLN, PortalEstudianteLN>();
+builder.Services.AddScoped<IPortalProfesorLN, PortalProfesorLN>();
 builder.Services.AddScoped<IAdministradorLN, AdministradorLN>();
 builder.Services.AddScoped<ILogActividadServicio, LogActividadServicio>();
 

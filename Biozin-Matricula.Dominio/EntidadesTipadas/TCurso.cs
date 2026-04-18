@@ -13,5 +13,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public decimal PrecioLaboratorio { get; set; }
         public int? idCursoRequisito { get; set; }
         public int HorasDuracion { get; set; }
+        public bool EsVirtual { get; set; } = false;
     }
 }

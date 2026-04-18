@@ -40,5 +40,8 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("horas_duracion")]
         public int HorasDuracion { get; set; }
 
+        [Column("es_virtual")]
+        public bool EsVirtual { get; set; } = false;
+
     }
 }
