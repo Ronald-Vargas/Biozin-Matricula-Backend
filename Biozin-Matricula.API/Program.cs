@@ -48,6 +48,7 @@ builder.Services.AddScoped<IPortalEstudianteLN, PortalEstudianteLN>();
 builder.Services.AddScoped<IPortalProfesorLN, PortalProfesorLN>();
 builder.Services.AddScoped<IAdministradorLN, AdministradorLN>();
 builder.Services.AddScoped<ILogActividadServicio, LogActividadServicio>();
+builder.Services.AddScoped<IFinanzasLN, FinanzasLN>();
 
 if (builder.Environment.IsDevelopment())
     builder.Services.AddSingleton<IDateTimeProvider, DateTimeProviderConfigurable>();
