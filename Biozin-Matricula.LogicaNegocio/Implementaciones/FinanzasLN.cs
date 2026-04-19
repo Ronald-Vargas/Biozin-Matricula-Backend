@@ -87,38 +87,42 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 var matriculasDelPeriodo = matriculas.Where(m => ofertaIds.Contains(m.IdOferta)).ToList();
                 var matriculaIds = matriculasDelPeriodo.Select(m => m.IdMatricula).ToHashSet();
 
-                var pagos = _unidadDeTrabajo.Pagos.Listar().ValorRetorno ?? [];
-                var pagosDelPeriodo = pagos.Where(p => matriculaIds.Contains(p.IdMatricula)).ToList();
-
                 var estudiantes = _unidadDeTrabajo.Estudiantes.Listar().ValorRetorno ?? [];
                 var estudiantesMap = estudiantes.ToDictionary(e => e.IdEstudiante);
-
                 var matriculasMap = matriculasDelPeriodo.ToDictionary(m => m.IdMatricula);
 
-                var detalles = pagosDelPeriodo.Select(pago =>
+                var pagos = _unidadDeTrabajo.Pagos.Listar().ValorRetorno ?? [];
+                var detalles = new List<TDetallePago>();
+
+                // 1. Pagos individuales (IdMatricula != null)
+                var pagosIndividuales = pagos.Where(p => p.IdMatricula.HasValue && matriculaIds.Contains(p.IdMatricula.Value));
+                foreach (var pago in pagosIndividuales)
                 {
-                    matriculasMap.TryGetValue(pago.IdMatricula, out var matricula);
+                    matriculasMap.TryGetValue(pago.IdMatricula ?? 0, out var matricula);
                     var estudiante = matricula != null && estudiantesMap.TryGetValue(matricula.IdEstudiante, out var est) ? est : null;
+                    detalles.Add(BuildDetalle(pago, estudiante, periodo.Nombre, ahora));
+                }
 
-                    var estadoReal = pago.Estado;
-                    if (estadoReal == "pendiente" && pago.FechaVencimiento < ahora)
-                        estadoReal = "vencido";
+                // 2. Pagos bulk (IdMatricula == null, vinculados via pago_matriculas)
+                var pagoMatriculas = _unidadDeTrabajo.PagoMatriculas
+                    .ObtenerEntidades(pm => matriculaIds.Contains(pm.IdMatricula))
+                    .ValorRetorno ?? [];
 
-                    return new TDetallePago
-                    {
-                        IdPago = pago.IdPago,
-                        Concepto = pago.Concepto,
-                        Monto = pago.Monto,
-                        Estado = estadoReal,
-                        FechaVencimiento = pago.FechaVencimiento,
-                        FechaPago = pago.FechaPago,
-                        NombreEstudiante = estudiante != null ? $"{estudiante.Nombre} {estudiante.ApellidoPaterno} {estudiante.ApellidoMaterno}".Trim() : "Desconocido",
-                        CarnetEstudiante = estudiante?.carnet.ToString() ?? string.Empty,
-                        NombrePeriodo = periodo.Nombre
-                    };
-                }).OrderByDescending(d => d.FechaVencimiento).ToList();
+                var idsPagosBulk = pagoMatriculas.Select(pm => pm.IdPago).Distinct().ToHashSet();
+                var pagosBulk = pagos.Where(p => p.IdMatricula == null && idsPagosBulk.Contains(p.IdPago));
 
-                resultado.ValorRetorno = detalles;
+                foreach (var pago in pagosBulk)
+                {
+                    var primeraMatricula = pagoMatriculas
+                        .Where(pm => pm.IdPago == pago.IdPago)
+                        .Select(pm => matriculasMap.TryGetValue(pm.IdMatricula, out var m) ? m : null)
+                        .FirstOrDefault(m => m != null);
+
+                    var estudiante = primeraMatricula != null && estudiantesMap.TryGetValue(primeraMatricula.IdEstudiante, out var est) ? est : null;
+                    detalles.Add(BuildDetalle(pago, estudiante, periodo.Nombre, ahora));
+                }
+
+                resultado.ValorRetorno = detalles.OrderByDescending(d => d.FechaVencimiento).ToList();
             }
             catch (Exception ex)
             {
@@ -126,6 +130,26 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 resultado.lpError("Error", ex.Message);
             }
             return resultado;
+        }
+
+        private TDetallePago BuildDetalle(Biozin_Matricula.Dominio.Entidades.Pago pago, Biozin_Matricula.Dominio.Entidades.Estudiante? estudiante, string nombrePeriodo, DateTime ahora)
+        {
+            var estado = pago.Estado;
+            if (estado == "pendiente" && pago.FechaVencimiento < ahora)
+                estado = "vencido";
+
+            return new TDetallePago
+            {
+                IdPago = pago.IdPago,
+                Concepto = pago.Concepto,
+                Monto = pago.Monto,
+                Estado = estado,
+                FechaVencimiento = pago.FechaVencimiento,
+                FechaPago = pago.FechaPago,
+                NombreEstudiante = estudiante != null ? $"{estudiante.Nombre} {estudiante.ApellidoPaterno} {estudiante.ApellidoMaterno}".Trim() : "Desconocido",
+                CarnetEstudiante = estudiante?.carnet.ToString() ?? string.Empty,
+                NombrePeriodo = nombrePeriodo
+            };
         }
 
         public Respuesta<IEnumerable<TResumenFinanzas>> ObtenerResumenTodosPeriodos()
@@ -160,7 +184,18 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var matriculaIds = matriculasDelPeriodo.Select(m => m.IdMatricula).ToHashSet();
 
             var pagos = _unidadDeTrabajo.Pagos.Listar().ValorRetorno ?? [];
-            var pagosDelPeriodo = pagos.Where(p => matriculaIds.Contains(p.IdMatricula)).ToList();
+
+            // Pagos individuales (flujo anterior)
+            var pagosIndividuales = pagos.Where(p => p.IdMatricula.HasValue && matriculaIds.Contains(p.IdMatricula.Value));
+
+            // Pagos bulk (nuevo flujo) via pago_matriculas
+            var pagoMatriculas = _unidadDeTrabajo.PagoMatriculas
+                .ObtenerEntidades(pm => matriculaIds.Contains(pm.IdMatricula))
+                .ValorRetorno ?? [];
+            var idsPagosBulk = pagoMatriculas.Select(pm => pm.IdPago).Distinct().ToHashSet();
+            var pagosBulk = pagos.Where(p => p.IdMatricula == null && idsPagosBulk.Contains(p.IdPago));
+
+            var pagosDelPeriodo = pagosIndividuales.Concat(pagosBulk);
 
             decimal totalRecaudado = 0, totalPendiente = 0, totalVencido = 0;
             int cantPagados = 0, cantPendientes = 0, cantVencidos = 0;

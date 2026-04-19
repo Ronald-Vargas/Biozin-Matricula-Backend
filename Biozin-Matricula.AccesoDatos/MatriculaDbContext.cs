@@ -95,11 +95,17 @@ namespace Biozin_Matricula.AccesoDatos
             modelBuilder.Entity<Pago>()
                 .HasOne(p => p.Matricula)
                 .WithMany()
-                .HasForeignKey(p => p.IdMatricula);
+                .HasForeignKey(p => p.IdMatricula)
+                .IsRequired(false);
 
             modelBuilder.Entity<Pago>()
                 .Property(p => p.Monto)
                 .HasColumnType("decimal(18,2)");
+
+            // Tabla creada manualmente — EF solo la usa para consultas, no la gestiona en migraciones
+            modelBuilder.Entity<PagoMatricula>()
+                .ToTable("pago_matriculas")
+                .HasKey(pm => pm.IdPagoMatricula);
 
         }
     }

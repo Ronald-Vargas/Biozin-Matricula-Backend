@@ -274,7 +274,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     CreditosAprobados = creditosAprobados,
                     CreditosMatriculados = creditosMatriculados,
                     CreditosEnCurso = creditosEnCurso,
-                    CreditosTotales = creditosTotales
+                    CreditosTotales = creditosTotales,
+                    TipoBeca = estudiante.TipoBeca
                 };
             }
             catch (Exception ex)
@@ -793,22 +794,19 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<List<TPagoEstudiante>>();
             try
             {
-                // Get all enrollments for this student
                 var matriculas = _unidadDeTrabajo.Matriculas
                     .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
                     .ValorRetorno ?? Enumerable.Empty<Matricula>();
 
-                var idsMatriculas = matriculas.Select(m => m.IdMatricula).ToList();
-
+                var idsMatriculas = matriculas.Select(m => m.IdMatricula).ToHashSet();
                 var pagos = new List<TPagoEstudiante>();
 
-                foreach (var idMatricula in idsMatriculas)
+                // 1. Pagos individuales (flujo anterior): pago.IdMatricula != null
+                foreach (var matricula in matriculas)
                 {
                     var pagosMatricula = _unidadDeTrabajo.Pagos
-                        .ObtenerEntidades(p => p.IdMatricula == idMatricula)
+                        .ObtenerEntidades(p => p.IdMatricula == matricula.IdMatricula)
                         .ValorRetorno ?? Enumerable.Empty<Pago>();
-
-                    var matricula = matriculas.First(m => m.IdMatricula == idMatricula);
 
                     var oferta = _unidadDeTrabajo.OfertasAcademicas
                         .ObtenerEntidad(o => o.IdOferta == matricula.IdOferta)
@@ -820,12 +818,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     foreach (var pago in pagosMatricula)
                     {
-                        // Update overdue status
                         var estado = pago.Estado;
                         if (estado == "pendiente" && pago.FechaVencimiento < DateTime.UtcNow)
-                        {
                             estado = "vencido";
-                        }
 
                         pagos.Add(new TPagoEstudiante
                         {
@@ -838,6 +833,52 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                             Periodo = periodo?.Nombre ?? ""
                         });
                     }
+                }
+
+                // 2. Pagos bulk (nuevo flujo): pago.IdMatricula == null, vinculados via pago_matriculas
+                var pagoMatriculas = _unidadDeTrabajo.PagoMatriculas
+                    .ObtenerEntidades(pm => idsMatriculas.Contains(pm.IdMatricula))
+                    .ValorRetorno ?? Enumerable.Empty<PagoMatricula>();
+
+                var idsPagosBulkAgregados = new HashSet<int>();
+                foreach (var pm in pagoMatriculas)
+                {
+                    if (idsPagosBulkAgregados.Contains(pm.IdPago)) continue;
+
+                    var pago = _unidadDeTrabajo.Pagos
+                        .ObtenerEntidad(p => p.IdPago == pm.IdPago && p.IdMatricula == null)
+                        .ValorRetorno;
+
+                    if (pago == null) continue;
+
+                    idsPagosBulkAgregados.Add(pm.IdPago);
+
+                    var mat = matriculas.FirstOrDefault(m => m.IdMatricula == pm.IdMatricula);
+                    Periodo? periodo = null;
+                    if (mat != null)
+                    {
+                        var oferta = _unidadDeTrabajo.OfertasAcademicas
+                            .ObtenerEntidad(o => o.IdOferta == mat.IdOferta)
+                            .ValorRetorno;
+                        periodo = oferta != null
+                            ? _unidadDeTrabajo.Periodos.ObtenerEntidad(p => p.IdPeriodo == oferta.IdPeriodo).ValorRetorno
+                            : null;
+                    }
+
+                    var estado = pago.Estado;
+                    if (estado == "pendiente" && pago.FechaVencimiento < DateTime.UtcNow)
+                        estado = "vencido";
+
+                    pagos.Add(new TPagoEstudiante
+                    {
+                        IdPago = pago.IdPago,
+                        Concepto = pago.Concepto,
+                        Monto = pago.Monto,
+                        FechaVencimiento = pago.FechaVencimiento,
+                        FechaPago = pago.FechaPago,
+                        Estado = estado,
+                        Periodo = periodo?.Nombre ?? ""
+                    });
                 }
 
                 resultado.ValorRetorno = pagos;
@@ -865,10 +906,25 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                // Verify the payment belongs to this student
-                var matricula = _unidadDeTrabajo.Matriculas
-                    .ObtenerEntidad(m => m.IdMatricula == pago.IdMatricula && m.IdEstudiante == idEstudiante)
-                    .ValorRetorno;
+                // Verify ownership: individual pago (IdMatricula != null) o bulk (IdMatricula == null via pago_matriculas)
+                Matricula? matricula;
+                if (pago.IdMatricula != null)
+                {
+                    matricula = _unidadDeTrabajo.Matriculas
+                        .ObtenerEntidad(m => m.IdMatricula == pago.IdMatricula && m.IdEstudiante == idEstudiante)
+                        .ValorRetorno;
+                }
+                else
+                {
+                    var pm = _unidadDeTrabajo.PagoMatriculas
+                        .ObtenerEntidad(pm => pm.IdPago == idPago)
+                        .ValorRetorno;
+                    matricula = pm != null
+                        ? _unidadDeTrabajo.Matriculas
+                            .ObtenerEntidad(m => m.IdMatricula == pm.IdMatricula && m.IdEstudiante == idEstudiante)
+                            .ValorRetorno
+                        : null;
+                }
 
                 if (matricula == null)
                 {
@@ -936,6 +992,298 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 resultado.lpError("Error al realizar pago", ex.Message);
             }
             return resultado;
+        }
+
+        public async Task<Respuesta<bool>> MatricularBulk(int idEstudiante, TMatricularBulkSolicitud solicitud)
+        {
+            var resultado = new Respuesta<bool>();
+            try
+            {
+                if (solicitud.IdsOferta == null || solicitud.IdsOferta.Count == 0)
+                {
+                    resultado.lpError("Error", "Debe seleccionar al menos un curso");
+                    return resultado;
+                }
+
+                var periodo = _unidadDeTrabajo.Periodos
+                    .ObtenerEntidad(p => p.EstadoMatricula == true)
+                    .ValorRetorno;
+
+                if (periodo == null)
+                {
+                    resultado.lpError("Error", "No hay un período de matrícula activo");
+                    return resultado;
+                }
+
+                var ahora = _tiempo.Ahora;
+                if (ahora < periodo.FechaMatriculaInicio || ahora > periodo.FechaMatriculaFin)
+                {
+                    resultado.lpError("Error",
+                        $"La matrícula estará disponible del {periodo.FechaMatriculaInicio:dd/MM/yyyy} al {periodo.FechaMatriculaFin:dd/MM/yyyy}");
+                    return resultado;
+                }
+
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
+                    .ValorRetorno;
+
+                if (estudiante?.IdCarrera == null)
+                {
+                    resultado.lpError("Error", "El estudiante no tiene una carrera asignada");
+                    return resultado;
+                }
+
+                var todasLasMatriculas = _unidadDeTrabajo.Matriculas
+                    .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
+                    .ValorRetorno ?? Enumerable.Empty<Matricula>();
+
+                var idsOfertasPeriodoActual = _unidadDeTrabajo.OfertasAcademicas
+                    .ObtenerEntidades(o => o.IdPeriodo == periodo.IdPeriodo)
+                    .ValorRetorno?.Select(o => o.IdOferta).ToHashSet() ?? new HashSet<int>();
+
+                // Cursos en los que el estudiante ya está inscrito en el período actual
+                var idsCursosEnPeriodoActual = new HashSet<int>();
+                foreach (var mat in todasLasMatriculas.Where(m => idsOfertasPeriodoActual.Contains(m.IdOferta)))
+                {
+                    var o = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidad(x => x.IdOferta == mat.IdOferta).ValorRetorno;
+                    if (o != null) idsCursosEnPeriodoActual.Add(o.IdCurso);
+                }
+
+                // Cursos ya completados en períodos anteriores
+                var idsCursosPagados = new HashSet<int>();
+                foreach (var mat in todasLasMatriculas.Where(m => !idsOfertasPeriodoActual.Contains(m.IdOferta)))
+                {
+                    var o = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidad(x => x.IdOferta == mat.IdOferta).ValorRetorno;
+                    if (o == null) continue;
+                    var pagoAnterior = _unidadDeTrabajo.Pagos
+                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula && p.Estado == "pagado")
+                        .ValorRetorno;
+                    if (pagoAnterior != null) idsCursosPagados.Add(o.IdCurso);
+                }
+
+                // Validar cada oferta seleccionada
+                var ofertasValidadas = new List<(OfertaAcademica oferta, Curso curso)>();
+                var horariosAcumulados = new List<(int idCurso, List<TDiaHorario> horarios)>();
+
+                foreach (var idOferta in solicitud.IdsOferta)
+                {
+                    var oferta = _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidad(o => o.IdOferta == idOferta && o.Estado == true && o.IdPeriodo == periodo.IdPeriodo)
+                        .ValorRetorno;
+
+                    if (oferta == null)
+                    {
+                        resultado.lpError("Error", $"La oferta {idOferta} no está disponible");
+                        return resultado;
+                    }
+
+                    if (oferta.Matriculados >= oferta.CupoMaximo)
+                    {
+                        resultado.lpError("Error", $"No hay cupos disponibles en una de las ofertas seleccionadas");
+                        return resultado;
+                    }
+
+                    var perteneceACarrera = _unidadDeTrabajo.CarreraCursos
+                        .ObtenerEntidad(cc => cc.IdCarrera == estudiante.IdCarrera.Value && cc.IdCurso == oferta.IdCurso)
+                        .ValorRetorno != null;
+
+                    if (!perteneceACarrera)
+                    {
+                        resultado.lpError("Error", "Un curso seleccionado no pertenece al plan de estudios de tu carrera");
+                        return resultado;
+                    }
+
+                    var curso = _unidadDeTrabajo.Cursos
+                        .ObtenerEntidad(c => c.IdCurso == oferta.IdCurso)
+                        .ValorRetorno;
+
+                    if (curso == null)
+                    {
+                        resultado.lpError("Error", "No se encontró información del curso");
+                        return resultado;
+                    }
+
+                    if (idsCursosEnPeriodoActual.Contains(curso.IdCurso))
+                    {
+                        resultado.lpError("Error", $"Ya estás matriculado en {curso.Nombre} en el período actual");
+                        return resultado;
+                    }
+
+                    if (idsCursosPagados.Contains(curso.IdCurso))
+                    {
+                        resultado.lpError("Error", $"Ya completaste el curso {curso.Nombre} anteriormente");
+                        return resultado;
+                    }
+
+                    if (curso.idCursoRequisito.HasValue && !idsCursosPagados.Contains(curso.idCursoRequisito.Value))
+                    {
+                        resultado.lpError("Error", $"No has completado el prerequisito requerido para {curso.Nombre}");
+                        return resultado;
+                    }
+
+                    // Verificar choque de horario con matrículas existentes y con los otros cursos seleccionados
+                    if (!string.IsNullOrEmpty(oferta.DiasHorarios))
+                    {
+                        var horariosNuevos = JsonSerializer.Deserialize<List<TDiaHorario>>(oferta.DiasHorarios, _jsonOptions)
+                                             ?? new List<TDiaHorario>();
+
+                        // vs existentes
+                        foreach (var mat in todasLasMatriculas.Where(m => idsOfertasPeriodoActual.Contains(m.IdOferta)))
+                        {
+                            var ofertaMat = _unidadDeTrabajo.OfertasAcademicas
+                                .ObtenerEntidad(o => o.IdOferta == mat.IdOferta).ValorRetorno;
+                            if (ofertaMat == null || string.IsNullOrEmpty(ofertaMat.DiasHorarios)) continue;
+
+                            var horariosEx = JsonSerializer.Deserialize<List<TDiaHorario>>(ofertaMat.DiasHorarios, _jsonOptions)
+                                             ?? new List<TDiaHorario>();
+                            if (HayChoqueHorario(horariosNuevos, horariosEx))
+                            {
+                                var cursoEx = _unidadDeTrabajo.Cursos
+                                    .ObtenerEntidad(c => c.IdCurso == ofertaMat.IdCurso).ValorRetorno;
+                                resultado.lpError("Choque de horario",
+                                    $"El horario de {curso.Nombre} choca con {cursoEx?.Nombre ?? "otro curso"} ya matriculado");
+                                return resultado;
+                            }
+                        }
+
+                        // vs otros cursos en la misma selección bulk
+                        foreach (var (_, horariosAcum) in horariosAcumulados)
+                        {
+                            if (HayChoqueHorario(horariosNuevos, horariosAcum))
+                            {
+                                resultado.lpError("Choque de horario",
+                                    $"Hay un choque de horario entre los cursos seleccionados ({curso.Nombre})");
+                                return resultado;
+                            }
+                        }
+
+                        horariosAcumulados.Add((curso.IdCurso, horariosNuevos));
+                    }
+
+                    ofertasValidadas.Add((oferta, curso));
+                    idsCursosEnPeriodoActual.Add(curso.IdCurso);
+                }
+
+                // Calcular descuento por beca
+                decimal becaFactor = 0m;
+                if (!string.IsNullOrEmpty(estudiante.TipoBeca) && estudiante.TipoBeca != "Ninguna")
+                {
+                    var cleaned = estudiante.TipoBeca.Replace("%", "").Trim();
+                    if (decimal.TryParse(cleaned, out var pct))
+                        becaFactor = pct / 100m;
+                }
+
+                decimal subtotalCursos = ofertasValidadas.Sum(x => x.oferta.Precio * (1 - becaFactor));
+                decimal montoTotal = subtotalCursos + 100000m + 15000m;
+
+                // Crear matrículas
+                var matriculasCreadas = new List<Matricula>();
+                foreach (var (oferta, _) in ofertasValidadas)
+                {
+                    var matricula = new Matricula
+                    {
+                        IdEstudiante = idEstudiante,
+                        IdOferta = oferta.IdOferta,
+                        FechaMatricula = DateTime.UtcNow,
+                        Nota = null,
+                        Estado = "en_curso"
+                    };
+                    _unidadDeTrabajo.Matriculas.Insertar(matricula);
+                    oferta.Matriculados++;
+                    _unidadDeTrabajo.OfertasAcademicas.Modificar(oferta);
+                    matriculasCreadas.Add(matricula);
+                }
+                _unidadDeTrabajo.Completar();
+
+                // Crear un único pago agrupado
+                int cantidadCursos = ofertasValidadas.Count;
+                var pago = new Pago
+                {
+                    IdMatricula = null,
+                    Concepto = $"Matrícula {periodo.Nombre} - {cantidadCursos} curso(s)",
+                    Monto = montoTotal,
+                    FechaVencimiento = periodo.FechaMatriculaFin.AddDays(30),
+                    FechaPago = solicitud.Financiar ? null : DateTime.UtcNow,
+                    Estado = solicitud.Financiar ? "pendiente" : "pagado"
+                };
+                _unidadDeTrabajo.Pagos.Insertar(pago);
+                _unidadDeTrabajo.Completar();
+
+                // Crear registros de detalle pago_matriculas
+                foreach (var matricula in matriculasCreadas)
+                {
+                    _unidadDeTrabajo.PagoMatriculas.Insertar(new PagoMatricula
+                    {
+                        IdPago = pago.IdPago,
+                        IdMatricula = matricula.IdMatricula
+                    });
+                }
+                _unidadDeTrabajo.Completar();
+
+                var nombresCursos = string.Join(", ", ofertasValidadas.Select(x => x.curso.Nombre));
+                _log.Registrar("matricula",
+                    $"{estudiante.Nombre} {estudiante.ApellidoPaterno} se matriculó en {cantidadCursos} curso(s): {nombresCursos}",
+                    "📝");
+
+                // Enviar comprobante de matrícula bulk por correo
+                if (!string.IsNullOrEmpty(estudiante.EmailPersonal))
+                {
+                    var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                    var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                    var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+
+                    var cursosList = ofertasValidadas.Select(x =>
+                        (x.curso.Codigo, x.curso.Nombre, x.oferta.Precio * (1 - becaFactor))
+                    ).ToList();
+
+                    await _correo.EnviarComprobanteMatriculaBulkAsync(
+                        estudiante.EmailPersonal,
+                        $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                        estudiante.carnet,
+                        cursosList,
+                        periodo.Nombre,
+                        DateTime.UtcNow,
+                        100000m,
+                        15000m,
+                        montoTotal,
+                        solicitud.Financiar,
+                        nombreUniversidad,
+                        correoRemitente
+                    );
+                }
+
+                resultado.ValorRetorno = true;
+                resultado.strMensajeRespuesta = solicitud.Financiar
+                    ? $"Matrícula registrada. El pago de ₡{montoTotal:N0} quedó pendiente."
+                    : $"Matrícula y pago de ₡{montoTotal:N0} realizados exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error MatricularBulk: {0}", ex.Message);
+                resultado.lpError("Error al procesar la matrícula", ex.Message);
+            }
+            return resultado;
+        }
+
+        private static bool HayChoqueHorario(List<TDiaHorario> a, List<TDiaHorario> b)
+        {
+            foreach (var slotA in a)
+            {
+                foreach (var slotB in b)
+                {
+                    if (!string.Equals(slotA.Dia, slotB.Dia, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (TimeSpan.TryParse(slotA.HoraInicio, out var iniA) &&
+                        TimeSpan.TryParse(slotA.HoraFin, out var finA) &&
+                        TimeSpan.TryParse(slotB.HoraInicio, out var iniB) &&
+                        TimeSpan.TryParse(slotB.HoraFin, out var finB))
+                    {
+                        if (iniA < finB && finA > iniB) return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

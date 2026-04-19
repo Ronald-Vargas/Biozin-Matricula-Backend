@@ -293,6 +293,95 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             await smtp.DisconnectAsync(true);
         }
 
+        public async Task EnviarComprobanteMatriculaBulkAsync(
+            string correoDestino,
+            string nombre,
+            long carnet,
+            List<(string codigo, string nombreCurso, decimal monto)> cursos,
+            string nombrePeriodo,
+            DateTime fechaMatricula,
+            decimal montoMatricula,
+            decimal montoInfraestructura,
+            decimal totalFinal,
+            bool financiado,
+            string nombreUniversidad,
+            string correoRemitente)
+        {
+            var mensaje = new MimeMessage();
+            mensaje.From.Add(new MailboxAddress(nombreUniversidad, correoRemitente));
+            mensaje.To.Add(MailboxAddress.Parse(correoDestino));
+            mensaje.Subject = $"Comprobante de Matrícula — {nombrePeriodo}";
+
+            var filasCursos = string.Join("", cursos.Select(c => $@"
+              <tr>
+                <td style='padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151;'>{c.codigo}</td>
+                <td style='padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151;'>{c.nombreCurso}</td>
+                <td style='padding:8px 12px;border-bottom:1px solid #e2e8f0;font-size:13px;color:#374151;text-align:right;'>₡{c.monto:N2}</td>
+              </tr>"));
+
+            var estadoPago = financiado
+                ? "<span style='background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;'>⏳ Pendiente de pago</span>"
+                : "<span style='background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;'>✓ Pagado</span>";
+
+            var builder = new BodyBuilder();
+            builder.HtmlBody = $@"
+<div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;'>
+  <div style='background:linear-gradient(135deg,#0f172a,#0891b2);padding:32px 40px;border-radius:12px 12px 0 0;'>
+    <h1 style='color:white;margin:0;font-size:22px;letter-spacing:-0.5px;'>{nombreUniversidad}</h1>
+    <p style='color:rgba(255,255,255,0.7);margin:6px 0 0;font-size:13px;'>Comprobante de Matrícula</p>
+  </div>
+  <div style='background:white;padding:32px 40px;border-radius:0 0 12px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.06);'>
+    <p style='color:#374151;margin:0 0 24px;'>Hola <strong>{nombre}</strong>,</p>
+    <p style='color:#374151;margin:0 0 20px;'>Tu matrícula para el período <strong>{nombrePeriodo}</strong> ha sido registrada exitosamente el {fechaMatricula.ToLocalTime():dd/MM/yyyy} a las {fechaMatricula.ToLocalTime():HH:mm}.</p>
+
+    <div style='background:#f1f5f9;border-radius:8px;padding:4px 0;margin-bottom:20px;'>
+      <p style='margin:12px 16px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;'>Carnet</p>
+      <p style='margin:0 16px 12px;font-size:18px;font-weight:800;color:#0f172a;'>{carnet}</p>
+    </div>
+
+    <table style='width:100%;border-collapse:collapse;margin-bottom:4px;'>
+      <thead>
+        <tr style='background:#f1f5f9;'>
+          <th style='padding:8px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;'>Código</th>
+          <th style='padding:8px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;'>Curso</th>
+          <th style='padding:8px 12px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;'>Monto</th>
+        </tr>
+      </thead>
+      <tbody>{filasCursos}</tbody>
+    </table>
+
+    <table style='width:100%;border-collapse:collapse;margin-bottom:24px;background:#f8fafc;border-radius:8px;'>
+      <tr>
+        <td style='padding:8px 12px;font-size:13px;color:#64748b;'>Derecho de matrícula</td>
+        <td style='padding:8px 12px;font-size:13px;color:#64748b;text-align:right;'>₡{montoMatricula:N2}</td>
+      </tr>
+      <tr>
+        <td style='padding:8px 12px;font-size:13px;color:#64748b;'>Infraestructura</td>
+        <td style='padding:8px 12px;font-size:13px;color:#64748b;text-align:right;'>₡{montoInfraestructura:N2}</td>
+      </tr>
+      <tr style='border-top:2px solid #e2e8f0;'>
+        <td style='padding:12px 12px 8px;font-size:15px;font-weight:800;color:#0f172a;'>Total</td>
+        <td style='padding:12px 12px 8px;font-size:15px;font-weight:800;color:#0891b2;text-align:right;'>₡{totalFinal:N2}</td>
+      </tr>
+    </table>
+
+    <div style='margin-bottom:24px;'>Estado del pago: {estadoPago}</div>
+
+    <p style='color:#6b7280;font-size:12px;margin:0;border-top:1px solid #e2e8f0;padding-top:20px;'>
+      © {DateTime.Now.Year} {nombreUniversidad} · Este es un correo automático, no responder.
+    </p>
+  </div>
+</div>";
+
+            mensaje.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_config["Mail:Smtp"], int.Parse(_config["Mail:Puerto"]), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
+            await smtp.SendAsync(mensaje);
+            await smtp.DisconnectAsync(true);
+        }
+
         public async Task EnviarCodigoRecuperacionAsync(
             string correoDestino,
             string nombre,

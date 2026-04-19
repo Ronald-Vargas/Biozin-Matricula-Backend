@@ -18,6 +18,7 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
         public IRepositorioAD<Aula> Aulas { get; private set; }
         public IRepositorioAD<Matricula> Matriculas { get; private set; }
         public IRepositorioAD<Pago> Pagos { get; private set; }
+        public IRepositorioAD<PagoMatricula> PagoMatriculas { get; private set; }
         public IRepositorioAD<Administrador> Administradores { get; private set; }
         public IRepositorioAD<LogActividad> LogActividades { get; private set; }
         public UnidadTrabajoEF(MatriculaDbContext contexto)
@@ -34,6 +35,7 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
             Aulas = new RepositorioAD<Aula>(contexto);
             Matriculas = new RepositorioAD<Matricula>(contexto);
             Pagos = new RepositorioAD<Pago>(contexto);
+            PagoMatriculas = new RepositorioAD<PagoMatricula>(contexto);
             Administradores = new RepositorioAD<Administrador>(contexto);
             LogActividades = new RepositorioAD<LogActividad>(contexto);
         }

@@ -12,7 +12,7 @@ namespace Biozin_Matricula.Dominio.Entidades
         public int IdPago { get; set; }
 
         [Column("id_matricula")]
-        public int IdMatricula { get; set; }
+        public int? IdMatricula { get; set; }
 
         [ForeignKey("IdMatricula")]
         public Matricula? Matricula { get; set; }

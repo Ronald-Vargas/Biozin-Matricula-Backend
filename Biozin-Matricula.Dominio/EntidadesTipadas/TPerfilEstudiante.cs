@@ -15,5 +15,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public int CreditosMatriculados { get; set; }
         public int CreditosEnCurso { get; set; }
         public int? CreditosTotales { get; set; }
+        public string? TipoBeca { get; set; }
     }
 }

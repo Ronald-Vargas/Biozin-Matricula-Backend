@@ -80,6 +80,16 @@ namespace Biozin_Matricula.API.Controladores
             return Ok(await _ln.Matricular(idEstudiante, solicitud.IdOferta));
         }
 
+        [HttpPost("MatricularBulk")]
+        public async Task<IActionResult> MatricularBulk([FromBody] TMatricularBulkSolicitud solicitud)
+        {
+            var idEstudiante = ObtenerIdEstudiante();
+            if (idEstudiante == 0)
+                return Unauthorized();
+
+            return Ok(await _ln.MatricularBulk(idEstudiante, solicitud));
+        }
+
 
 
 
