@@ -253,11 +253,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     // Total de todos los créditos llevados (todos los períodos)
                     creditosMatriculados += curso.Creditos;
 
-                    if (periodoActual != null && oferta.IdPeriodo == periodoActual.IdPeriodo)
-                        // Período actual → en curso
+                    if (periodoActual != null && oferta.IdPeriodo == periodoActual.IdPeriodo && mat.Estado == "en_curso")
                         creditosEnCurso += curso.Creditos;
                     else if (mat.Estado == "aprobado")
-                        // Períodos pasados → solo aprobados
                         creditosAprobados += curso.Creditos;
                 }
 
@@ -1263,6 +1261,129 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             {
                 _logger.LogError("Error MatricularBulk: {0}", ex.Message);
                 resultado.lpError("Error al procesar la matrícula", ex.Message);
+            }
+            return resultado;
+        }
+
+        public Respuesta<TMallaCurricular> ObtenerMallaCurricular(int idEstudiante)
+        {
+            var resultado = new Respuesta<TMallaCurricular>();
+            try
+            {
+                var estudiante = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(e => e.IdEstudiante == idEstudiante).ValorRetorno;
+                if (estudiante == null || !estudiante.IdCarrera.HasValue)
+                {
+                    resultado.lpError("Sin carrera", "El estudiante no tiene una carrera asignada.");
+                    return resultado;
+                }
+
+                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == estudiante.IdCarrera.Value).ValorRetorno;
+                if (carrera == null)
+                {
+                    resultado.lpError("No encontrado", "No se encontró la carrera del estudiante.");
+                    return resultado;
+                }
+
+                var carreraCursos = _unidadDeTrabajo.CarreraCursos
+                    .ObtenerEntidades(cc => cc.IdCarrera == carrera.IdCarrera)
+                    .ValorRetorno ?? [];
+
+                var cursos = _unidadDeTrabajo.Cursos.Listar().ValorRetorno ?? [];
+                var cursosMap = cursos.ToDictionary(c => c.IdCurso);
+
+                var matriculas = _unidadDeTrabajo.Matriculas
+                    .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
+                    .ValorRetorno ?? [];
+
+                var ofertaIds = matriculas.Select(m => m.IdOferta).ToHashSet();
+                var todasOfertas = _unidadDeTrabajo.OfertasAcademicas
+                    .ObtenerEntidades(o => ofertaIds.Contains(o.IdOferta))
+                    .ValorRetorno ?? [];
+                var ofertasMap = todasOfertas.ToDictionary(o => o.IdOferta);
+
+                // Build lookup: idCurso -> matrícula (prefer aprobado > en_curso > reprobado)
+                var matriculasPorCurso = new Dictionary<int, Dominio.Entidades.Matricula>();
+                foreach (var m in matriculas)
+                {
+                    if (!ofertasMap.TryGetValue(m.IdOferta, out var oferta)) continue;
+                    if (!matriculasPorCurso.ContainsKey(oferta.IdCurso))
+                        matriculasPorCurso[oferta.IdCurso] = m;
+                    else
+                    {
+                        var existing = matriculasPorCurso[oferta.IdCurso];
+                        if (m.Estado == "aprobado" || (m.Estado == "en_curso" && existing.Estado != "aprobado"))
+                            matriculasPorCurso[oferta.IdCurso] = m;
+                    }
+                }
+
+                var aprobados = matriculasPorCurso.Where(kv => kv.Value.Estado == "aprobado").Select(kv => kv.Key).ToHashSet();
+
+                var semestresAgrupados = carreraCursos
+                    .GroupBy(cc => cc.Semestre)
+                    .OrderBy(g => g.Key);
+
+                int totalCreditos = 0, creditosAprobados = 0, creditosEnCurso = 0;
+                var semestres = new List<TSemestreMalla>();
+
+                foreach (var grupo in semestresAgrupados)
+                {
+                    var cursosSemestre = new List<TCursoMalla>();
+                    foreach (var cc in grupo.OrderBy(cc => cc.IdCurso))
+                    {
+                        if (!cursosMap.TryGetValue(cc.IdCurso, out var curso)) continue;
+                        totalCreditos += curso.Creditos;
+
+                        string estado;
+                        decimal? nota = null;
+
+                        if (matriculasPorCurso.TryGetValue(cc.IdCurso, out var mat))
+                        {
+                            estado = mat.Estado; // aprobado | en_curso | reprobado
+                            nota = mat.Nota;
+                            if (estado == "aprobado") creditosAprobados += curso.Creditos;
+                            else if (estado == "en_curso") creditosEnCurso += curso.Creditos;
+                        }
+                        else
+                        {
+                            // Not yet taken — check if prerequisite is met
+                            bool requisitoOk = !curso.idCursoRequisito.HasValue || aprobados.Contains(curso.idCursoRequisito.Value);
+                            estado = requisitoOk ? "disponible" : "pendiente";
+                        }
+
+                        string? nombreRequisito = null;
+                        if (curso.idCursoRequisito.HasValue && cursosMap.TryGetValue(curso.idCursoRequisito.Value, out var cursoReq))
+                            nombreRequisito = cursoReq.Nombre;
+
+                        cursosSemestre.Add(new TCursoMalla
+                        {
+                            IdCurso = cc.IdCurso,
+                            Codigo = curso.Codigo,
+                            Nombre = curso.Nombre,
+                            Creditos = curso.Creditos,
+                            Semestre = cc.Semestre,
+                            EsVirtual = curso.EsVirtual,
+                            IdCursoRequisito = curso.idCursoRequisito,
+                            NombreRequisito = nombreRequisito,
+                            Estado = estado,
+                            Nota = nota
+                        });
+                    }
+                    semestres.Add(new TSemestreMalla { Numero = grupo.Key, Cursos = cursosSemestre });
+                }
+
+                resultado.ValorRetorno = new TMallaCurricular
+                {
+                    NombreCarrera = carrera.Nombre,
+                    TotalCreditos = totalCreditos,
+                    CreditosAprobados = creditosAprobados,
+                    CreditosEnCurso = creditosEnCurso,
+                    Semestres = semestres
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error ObtenerMallaCurricular: {0}", ex.Message);
+                resultado.lpError("Error", ex.Message);
             }
             return resultado;
         }
