@@ -213,8 +213,11 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             try
             {
                 var datos = _unidadDeTrabajo.Estudiantes.ObtenerEntidades(x =>
+                    (estudiante.IdEstudiante == 0 || x.IdEstudiante == estudiante.IdEstudiante) &&
                     (string.IsNullOrEmpty(estudiante.Nombre) || x.Nombre.Contains(estudiante.Nombre)));
-                resultado.ValorRetorno = _mapper.Map<IEnumerable<TEstudiante>>(datos.ValorRetorno);
+                var lista = (_mapper.Map<IEnumerable<TEstudiante>>(datos.ValorRetorno) ?? Enumerable.Empty<TEstudiante>()).ToList();
+                foreach (var t in lista) EnriquecerAcademico(t);
+                resultado.ValorRetorno = lista;
             }
             catch (Exception ex)
             {
@@ -230,7 +233,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             try
             {
                 var datos = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(x => x.IdEstudiante == estudiante.IdEstudiante);
-                resultado.ValorRetorno = _mapper.Map<TEstudiante>(datos.ValorRetorno);
+                var t = _mapper.Map<TEstudiante>(datos.ValorRetorno);
+                if (t != null) EnriquecerAcademico(t);
+                resultado.ValorRetorno = t;
             }
             catch (Exception ex)
             {
@@ -246,7 +251,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             try
             {
                 var datos = _unidadDeTrabajo.Estudiantes.Listar();
-                resultado.ValorRetorno = _mapper.Map<IEnumerable<TEstudiante>>(datos.ValorRetorno);
+                var lista = (_mapper.Map<IEnumerable<TEstudiante>>(datos.ValorRetorno) ?? Enumerable.Empty<TEstudiante>()).ToList();
+                foreach (var t in lista) EnriquecerAcademico(t);
+                resultado.ValorRetorno = lista;
             }
             catch (Exception ex)
             {
@@ -254,6 +261,56 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 resultado.lpError("Error", ex.Message);
             }
             return resultado;
+        }
+
+        private void EnriquecerAcademico(TEstudiante t)
+        {
+            if (t.IdCarrera.HasValue)
+            {
+                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == t.IdCarrera.Value).ValorRetorno;
+                t.CarreraNombre = carrera?.Nombre;
+                t.CarreraCodigo = carrera?.Codigo;
+            }
+
+            // Matrículas del estudiante
+            var matriculas = _unidadDeTrabajo.Matriculas
+                .ObtenerEntidades(m => m.IdEstudiante == t.IdEstudiante)
+                .ValorRetorno ?? Enumerable.Empty<Biozin_Matricula.Dominio.Entidades.Matricula>();
+
+            // IDs de cursos aprobados + créditos aprobados
+            var idsCursosAprobados = new HashSet<int>();
+            foreach (var mat in matriculas.Where(m => m.Estado == "aprobado"))
+            {
+                var oferta = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(o => o.IdOferta == mat.IdOferta).ValorRetorno;
+                if (oferta == null) continue;
+                idsCursosAprobados.Add(oferta.IdCurso);
+                var curso = _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == oferta.IdCurso).ValorRetorno;
+                if (curso != null) t.CreditosAprobados += curso.Creditos;
+            }
+
+            if (!t.IdCarrera.HasValue) return;
+
+            // Cursos del plan de carrera agrupados por semestre
+            var cursosCarrera = _unidadDeTrabajo.CarreraCursos
+                .ObtenerEntidades(cc => cc.IdCarrera == t.IdCarrera.Value)
+                .ValorRetorno ?? Enumerable.Empty<Biozin_Matricula.Dominio.Entidades.CarreraCurso>();
+
+            // Créditos totales
+            foreach (var cc in cursosCarrera)
+            {
+                var curso = _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == cc.IdCurso).ValorRetorno;
+                if (curso != null) t.CreditosTotales += curso.Creditos;
+            }
+
+            // Semestre actual: cantidad de períodos distintos en los que el estudiante ha matriculado
+            var periodosDistintos = new HashSet<int>();
+            foreach (var mat in matriculas)
+            {
+                var ofertaMat = _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(o => o.IdOferta == mat.IdOferta).ValorRetorno;
+                if (ofertaMat != null) periodosDistintos.Add(ofertaMat.IdPeriodo);
+            }
+            if (periodosDistintos.Count > 0)
+                t.SemestreActual = periodosDistintos.Count;
         }
     }
 }

@@ -259,6 +259,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         creditosAprobados += curso.Creditos;
                 }
 
+                // Semestre actual = cantidad de períodos distintos matriculados
+                var periodosDistintos = todasLasMatriculas
+                    .Select(m => _unidadDeTrabajo.OfertasAcademicas.ObtenerEntidad(o => o.IdOferta == m.IdOferta).ValorRetorno?.IdPeriodo)
+                    .Where(id => id.HasValue)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .Count();
+
                 resultado.ValorRetorno = new TPerfilEstudiante
                 {
                     IdEstudiante = estudiante.IdEstudiante,
@@ -267,7 +275,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     Carnet = estudiante.carnet,
                     IdCarrera = estudiante.IdCarrera,
                     NombreCarrera = carrera?.Nombre,
-                    SemestreActual = estudiante.SemestreActual,
+                    SemestreActual = periodosDistintos > 0 ? periodosDistintos : estudiante.SemestreActual,
                     EmailInstitucional = estudiante.EmailInstitucional,
                     CreditosAprobados = creditosAprobados,
                     CreditosMatriculados = creditosMatriculados,

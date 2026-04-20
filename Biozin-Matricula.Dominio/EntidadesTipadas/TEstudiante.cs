@@ -37,5 +37,11 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public long carnet { get; set; }
 
         public bool RequiereCambioContrasena { get; set; } = true;
+
+        // Calculados dinámicamente
+        public int CreditosAprobados { get; set; }
+        public int CreditosTotales { get; set; }
+        public string? CarreraCodigo { get; set; }
+        public string? CarreraNombre { get; set; }
     }
 }
