@@ -362,21 +362,37 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         idsCursosEnPeriodoActual.Add(ofertaMat.IdCurso);
                 }
 
-                // Cursos ya completados: pagados en períodos anteriores
-                // → el estudiante ya los llevó, no pueden volver a aparecer
+                // Cursos aprobados en períodos anteriores (no reprobados)
+                // → solo se excluyen si el pago fue realizado Y la matrícula fue aprobada
                 var idsCursosPagados = new HashSet<int>();
                 foreach (var mat in matriculasPeriodosAnteriores)
                 {
+                    if (mat.Estado != "aprobado") continue;
+
                     var ofertaMat = _unidadDeTrabajo.OfertasAcademicas
                         .ObtenerEntidad(o => o.IdOferta == mat.IdOferta)
                         .ValorRetorno;
                     if (ofertaMat == null) continue;
 
-                    var pago = _unidadDeTrabajo.Pagos
-                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula)
+                    // Pago individual (flujo anterior)
+                    var pagoIndividual = _unidadDeTrabajo.Pagos
+                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula && p.Estado == "pagado")
                         .ValorRetorno;
 
-                    if (pago?.Estado == "pagado")
+                    // Pago bulk (flujo actual, IdMatricula == null, vinculado via pago_matriculas)
+                    Pago? pagoBulk = null;
+                    if (pagoIndividual == null)
+                    {
+                        var pm = _unidadDeTrabajo.PagoMatriculas
+                            .ObtenerEntidad(x => x.IdMatricula == mat.IdMatricula)
+                            .ValorRetorno;
+                        if (pm != null)
+                            pagoBulk = _unidadDeTrabajo.Pagos
+                                .ObtenerEntidad(p => p.IdPago == pm.IdPago && p.Estado == "pagado")
+                                .ValorRetorno;
+                    }
+
+                    if (pagoIndividual != null || pagoBulk != null)
                         idsCursosPagados.Add(ofertaMat.IdCurso);
                 }
 
@@ -568,22 +584,37 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     }
                 }
 
-                // Verificar que el estudiante no ya llevó este curso (pagado en período anterior)
+                // Verificar que el estudiante no ya aprobó este curso en un período anterior
                 var matriculasPeriodosAnteriores = todasLasMatriculas
                     .Where(m => !idsOfertasPeriodoActual.Contains(m.IdOferta))
                     .ToList();
 
                 foreach (var mat in matriculasPeriodosAnteriores)
                 {
+                    if (mat.Estado != "aprobado") continue;
+
                     var ofertaMat = _unidadDeTrabajo.OfertasAcademicas
                         .ObtenerEntidad(o => o.IdOferta == mat.IdOferta)
                         .ValorRetorno;
                     if (ofertaMat?.IdCurso != oferta.IdCurso) continue;
 
-                    var pagoAnterior = _unidadDeTrabajo.Pagos
-                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula)
+                    var pagoIndividual = _unidadDeTrabajo.Pagos
+                        .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula && p.Estado == "pagado")
                         .ValorRetorno;
-                    if (pagoAnterior?.Estado == "pagado")
+
+                    Pago? pagoBulk = null;
+                    if (pagoIndividual == null)
+                    {
+                        var pm = _unidadDeTrabajo.PagoMatriculas
+                            .ObtenerEntidad(x => x.IdMatricula == mat.IdMatricula)
+                            .ValorRetorno;
+                        if (pm != null)
+                            pagoBulk = _unidadDeTrabajo.Pagos
+                                .ObtenerEntidad(p => p.IdPago == pm.IdPago && p.Estado == "pagado")
+                                .ValorRetorno;
+                    }
+
+                    if (pagoIndividual != null || pagoBulk != null)
                     {
                         resultado.lpError("Error", "Ya completaste este curso anteriormente");
                         return resultado;
@@ -787,17 +818,27 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        public Respuesta<List<TPagoEstudiante>> ObtenerPagos(int idEstudiante)
+        public async Task<Respuesta<List<TPagoEstudiante>>> ObtenerPagos(int idEstudiante)
         {
             var resultado = new Respuesta<List<TPagoEstudiante>>();
             try
             {
+                var ahora = _tiempo.Ahora;
+
                 var matriculas = _unidadDeTrabajo.Matriculas
                     .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
                     .ValorRetorno ?? Enumerable.Empty<Matricula>();
 
                 var idsMatriculas = matriculas.Select(m => m.IdMatricula).ToHashSet();
                 var pagos = new List<TPagoEstudiante>();
+
+                var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
+                    .ValorRetorno;
 
                 // 1. Pagos individuales (flujo anterior): pago.IdMatricula != null
                 foreach (var matricula in matriculas)
@@ -817,8 +858,43 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     foreach (var pago in pagosMatricula)
                     {
                         var estado = pago.Estado;
-                        if (estado == "pendiente" && pago.FechaVencimiento < DateTime.UtcNow)
+                        if (estado == "pendiente" && pago.FechaVencimiento < ahora)
+                        {
                             estado = "vencido";
+                            pago.Estado = "vencido";
+                            _unidadDeTrabajo.Pagos.Modificar(pago);
+
+                            matricula.Estado = "reprobado";
+                            _unidadDeTrabajo.Matriculas.Modificar(matricula);
+                            _unidadDeTrabajo.Completar();
+
+                            _log.Registrar("pago_vencido",
+                                $"Pago vencido para {estudiante?.Nombre} {estudiante?.ApellidoPaterno} — {pago.Concepto}",
+                                "⛔");
+
+                            if (estudiante?.EmailPersonal != null)
+                            {
+                                var curso = oferta != null
+                                    ? _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == oferta.IdCurso).ValorRetorno
+                                    : null;
+                                try
+                                {
+                                    await _correo.EnviarNotificacionPagoVencidoAsync(
+                                        estudiante.EmailPersonal,
+                                        $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                                        estudiante.carnet,
+                                        pago.Concepto,
+                                        periodo?.Nombre ?? "",
+                                        pago.Monto,
+                                        pago.FechaVencimiento,
+                                        curso != null ? new List<string> { curso.Nombre } : new List<string>(),
+                                        nombreUniversidad,
+                                        correoRemitente
+                                    );
+                                }
+                                catch (Exception ex) { _logger.LogWarning("No se pudo enviar correo vencimiento: {0}", ex.Message); }
+                            }
+                        }
 
                         pagos.Add(new TPagoEstudiante
                         {
@@ -851,7 +927,17 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
                     idsPagosBulkAgregados.Add(pm.IdPago);
 
-                    var mat = matriculas.FirstOrDefault(m => m.IdMatricula == pm.IdMatricula);
+                    // Obtener todas las matrículas vinculadas a este pago bulk
+                    var todasLasPmDeEstePago = _unidadDeTrabajo.PagoMatriculas
+                        .ObtenerEntidades(x => x.IdPago == pago.IdPago)
+                        .ValorRetorno ?? Enumerable.Empty<PagoMatricula>();
+
+                    var matriculasBulk = todasLasPmDeEstePago
+                        .Select(x => matriculas.FirstOrDefault(m => m.IdMatricula == x.IdMatricula))
+                        .Where(m => m != null)
+                        .ToList();
+
+                    var mat = matriculasBulk.FirstOrDefault();
                     Periodo? periodo = null;
                     if (mat != null)
                     {
@@ -864,8 +950,54 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     }
 
                     var estado = pago.Estado;
-                    if (estado == "pendiente" && pago.FechaVencimiento < DateTime.UtcNow)
+                    if (estado == "pendiente" && pago.FechaVencimiento < ahora)
+                    {
                         estado = "vencido";
+                        pago.Estado = "vencido";
+                        _unidadDeTrabajo.Pagos.Modificar(pago);
+
+                        var nombresCursosBulk = new List<string>();
+                        foreach (var matBulk in matriculasBulk)
+                        {
+                            if (matBulk == null) continue;
+                            matBulk.Estado = "reprobado";
+                            _unidadDeTrabajo.Matriculas.Modificar(matBulk);
+
+                            var ofertaBulk = _unidadDeTrabajo.OfertasAcademicas
+                                .ObtenerEntidad(o => o.IdOferta == matBulk.IdOferta).ValorRetorno;
+                            if (ofertaBulk != null)
+                            {
+                                var cursoBulk = _unidadDeTrabajo.Cursos
+                                    .ObtenerEntidad(c => c.IdCurso == ofertaBulk.IdCurso).ValorRetorno;
+                                if (cursoBulk != null) nombresCursosBulk.Add(cursoBulk.Nombre);
+                            }
+                        }
+                        _unidadDeTrabajo.Completar();
+
+                        _log.Registrar("pago_vencido",
+                            $"Pago vencido para {estudiante?.Nombre} {estudiante?.ApellidoPaterno} — {pago.Concepto}",
+                            "⛔");
+
+                        if (estudiante?.EmailPersonal != null)
+                        {
+                            try
+                            {
+                                await _correo.EnviarNotificacionPagoVencidoAsync(
+                                    estudiante.EmailPersonal,
+                                    $"{estudiante.Nombre} {estudiante.ApellidoPaterno}",
+                                    estudiante.carnet,
+                                    pago.Concepto,
+                                    periodo?.Nombre ?? "",
+                                    pago.Monto,
+                                    pago.FechaVencimiento,
+                                    nombresCursosBulk,
+                                    nombreUniversidad,
+                                    correoRemitente
+                                );
+                            }
+                            catch (Exception ex) { _logger.LogWarning("No se pudo enviar correo vencimiento: {0}", ex.Message); }
+                        }
+                    }
 
                     pagos.Add(new TPagoEstudiante
                     {
@@ -933,6 +1065,12 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 if (pago.Estado == "pagado")
                 {
                     resultado.lpError("Error", "Este pago ya fue realizado");
+                    return resultado;
+                }
+
+                if (pago.Estado == "vencido" || pago.FechaVencimiento < _tiempo.Ahora)
+                {
+                    resultado.lpError("Pago vencido", "El plazo de pago ha expirado. Los cursos asociados han sido marcados como reprobados.");
                     return resultado;
                 }
 
@@ -1048,17 +1186,36 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     if (o != null) idsCursosEnPeriodoActual.Add(o.IdCurso);
                 }
 
-                // Cursos ya completados en períodos anteriores
+                // Cursos aprobados en períodos anteriores (reprobados pueden re-matricularse)
                 var idsCursosPagados = new HashSet<int>();
                 foreach (var mat in todasLasMatriculas.Where(m => !idsOfertasPeriodoActual.Contains(m.IdOferta)))
                 {
+                    if (mat.Estado != "aprobado") continue;
+
                     var o = _unidadDeTrabajo.OfertasAcademicas
                         .ObtenerEntidad(x => x.IdOferta == mat.IdOferta).ValorRetorno;
                     if (o == null) continue;
-                    var pagoAnterior = _unidadDeTrabajo.Pagos
+
+                    // Pago individual
+                    var pagoIndividual = _unidadDeTrabajo.Pagos
                         .ObtenerEntidad(p => p.IdMatricula == mat.IdMatricula && p.Estado == "pagado")
                         .ValorRetorno;
-                    if (pagoAnterior != null) idsCursosPagados.Add(o.IdCurso);
+
+                    // Pago bulk
+                    Pago? pagoBulk = null;
+                    if (pagoIndividual == null)
+                    {
+                        var pm = _unidadDeTrabajo.PagoMatriculas
+                            .ObtenerEntidad(x => x.IdMatricula == mat.IdMatricula)
+                            .ValorRetorno;
+                        if (pm != null)
+                            pagoBulk = _unidadDeTrabajo.Pagos
+                                .ObtenerEntidad(p => p.IdPago == pm.IdPago && p.Estado == "pagado")
+                                .ValorRetorno;
+                    }
+
+                    if (pagoIndividual != null || pagoBulk != null)
+                        idsCursosPagados.Add(o.IdCurso);
                 }
 
                 // Validar cada oferta seleccionada

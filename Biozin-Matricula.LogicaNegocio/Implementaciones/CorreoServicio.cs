@@ -419,5 +419,82 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             await smtp.SendAsync(mensaje);
             await smtp.DisconnectAsync(true);
         }
+
+        public async Task EnviarNotificacionPagoVencidoAsync(
+            string correoDestino,
+            string nombre,
+            long carnet,
+            string concepto,
+            string nombrePeriodo,
+            decimal monto,
+            DateTime fechaVencimiento,
+            List<string> nombresCursos,
+            string nombreUniversidad,
+            string correoRemitente)
+        {
+            var mensaje = new MimeMessage();
+            mensaje.From.Add(new MailboxAddress(nombreUniversidad, correoRemitente));
+            mensaje.To.Add(MailboxAddress.Parse(correoDestino));
+            mensaje.Subject = $"Pago vencido — {nombrePeriodo}";
+
+            var filasCursos = string.Join("", nombresCursos.Select(c => $@"
+              <tr>
+                <td style='padding:8px 12px;border-bottom:1px solid #fecaca;font-size:13px;color:#374151;'>📚 {c}</td>
+              </tr>"));
+
+            var builder = new BodyBuilder();
+            builder.HtmlBody = $@"
+<div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#f8fafc;'>
+  <div style='background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:32px 40px;border-radius:12px 12px 0 0;'>
+    <h1 style='color:white;margin:0;font-size:22px;letter-spacing:-0.5px;'>{nombreUniversidad}</h1>
+    <p style='color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:13px;'>Notificación de pago vencido</p>
+  </div>
+  <div style='background:white;padding:32px 40px;border-radius:0 0 12px 12px;box-shadow:0 4px 20px rgba(0,0,0,0.06);'>
+    <p style='color:#374151;margin:0 0 16px;'>Hola <strong>{nombre}</strong>,</p>
+    <div style='background:#fef2f2;border-left:4px solid #dc2626;padding:16px 20px;border-radius:0 8px 8px 0;margin-bottom:24px;'>
+      <p style='margin:0;color:#991b1b;font-weight:700;font-size:15px;'>⚠️ Tu pago ha vencido</p>
+      <p style='margin:8px 0 0;color:#7f1d1d;font-size:13px;'>
+        El plazo para realizar el pago de tu matrícula en el período <strong>{nombrePeriodo}</strong> expiró el {fechaVencimiento.ToLocalTime():dd/MM/yyyy}.
+        Los cursos asociados han sido marcados como <strong>reprobados</strong>.
+      </p>
+    </div>
+
+    <div style='background:#f1f5f9;border-radius:8px;padding:4px 0;margin-bottom:20px;'>
+      <p style='margin:12px 16px 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;'>Carnet</p>
+      <p style='margin:0 16px 12px;font-size:18px;font-weight:800;color:#0f172a;'>{carnet}</p>
+    </div>
+
+    <p style='font-size:13px;font-weight:700;color:#374151;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;'>Cursos afectados</p>
+    <table style='width:100%;border-collapse:collapse;margin-bottom:20px;background:#fff5f5;border-radius:8px;overflow:hidden;'>
+      <tbody>{filasCursos}</tbody>
+    </table>
+
+    <div style='background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:24px;'>
+      <div style='display:flex;justify-content:space-between;'>
+        <span style='font-size:14px;color:#64748b;'>Concepto</span>
+        <span style='font-size:14px;color:#374151;'>{concepto}</span>
+      </div>
+      <div style='display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid #e2e8f0;padding-top:8px;'>
+        <span style='font-size:15px;font-weight:800;color:#0f172a;'>Monto no pagado</span>
+        <span style='font-size:15px;font-weight:800;color:#dc2626;'>₡{monto:N2}</span>
+      </div>
+    </div>
+
+    <p style='color:#374151;font-size:13px;'>Si crees que esto es un error o deseas más información, comunícate con la oficina de registro de {nombreUniversidad}.</p>
+
+    <p style='color:#6b7280;font-size:12px;margin:0;border-top:1px solid #e2e8f0;padding-top:20px;'>
+      © {DateTime.Now.Year} {nombreUniversidad} · Este es un correo automático, no responder.
+    </p>
+  </div>
+</div>";
+
+            mensaje.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_config["Mail:Smtp"], int.Parse(_config["Mail:Puerto"]), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
+            await smtp.SendAsync(mensaje);
+            await smtp.DisconnectAsync(true);
+        }
     }
 }

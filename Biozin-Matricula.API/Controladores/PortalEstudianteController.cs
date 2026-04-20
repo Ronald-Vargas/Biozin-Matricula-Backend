@@ -122,13 +122,13 @@ namespace Biozin_Matricula.API.Controladores
 
 
         [HttpGet("Pagos")]
-        public IActionResult ObtenerPagos()
+        public async Task<IActionResult> ObtenerPagos()
         {
             var idEstudiante = ObtenerIdEstudiante();
             if (idEstudiante == 0)
                 return Unauthorized();
 
-            return Ok(_ln.ObtenerPagos(idEstudiante));
+            return Ok(await _ln.ObtenerPagos(idEstudiante));
         }
 
 

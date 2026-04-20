@@ -78,5 +78,18 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             string correoRemitente
         );
 
+        Task EnviarNotificacionPagoVencidoAsync(
+            string correoDestino,
+            string nombre,
+            long carnet,
+            string concepto,
+            string nombrePeriodo,
+            decimal monto,
+            DateTime fechaVencimiento,
+            List<string> nombresCursos,
+            string nombreUniversidad,
+            string correoRemitente
+        );
+
     }
 }
