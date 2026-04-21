@@ -727,6 +727,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     );
                 }
 
+                ActualizarSemestreActual(idEstudiante);
+
                 resultado.ValorRetorno = true;
                 resultado.strMensajeRespuesta = "Matrícula realizada exitosamente";
             }
@@ -1431,6 +1433,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     );
                 }
 
+                ActualizarSemestreActual(idEstudiante);
+
                 resultado.ValorRetorno = true;
                 resultado.strMensajeRespuesta = solicitud.Financiar
                     ? $"Matrícula registrada. El pago de ₡{montoTotal:N0} quedó pendiente."
@@ -1609,6 +1613,40 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 }
             }
             return false;
+        }
+
+        private void ActualizarSemestreActual(int idEstudiante)
+        {
+            try
+            {
+                var estudiante = _unidadDeTrabajo.Estudiantes
+                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
+                    .ValorRetorno;
+                if (estudiante == null) return;
+
+                var matriculas = _unidadDeTrabajo.Matriculas
+                    .ObtenerEntidades(m => m.IdEstudiante == idEstudiante)
+                    .ValorRetorno ?? Enumerable.Empty<Matricula>();
+
+                var periodosDistintos = matriculas
+                    .Select(m => _unidadDeTrabajo.OfertasAcademicas
+                        .ObtenerEntidad(o => o.IdOferta == m.IdOferta).ValorRetorno?.IdPeriodo)
+                    .Where(id => id.HasValue)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .Count();
+
+                if (periodosDistintos > 0 && estudiante.SemestreActual != periodosDistintos)
+                {
+                    estudiante.SemestreActual = periodosDistintos;
+                    _unidadDeTrabajo.Estudiantes.Modificar(estudiante);
+                    _unidadDeTrabajo.Completar();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("No se pudo actualizar semestre_actual: {0}", ex.Message);
+            }
         }
     }
 }
