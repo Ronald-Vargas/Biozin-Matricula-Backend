@@ -457,6 +457,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     });
                 }
 
+                var ajustesOfertas = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+
                 resultado.ValorRetorno = new TMatricularPeriodo
                 {
                     IdPeriodo = periodo.IdPeriodo,
@@ -464,7 +466,9 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     FechaInicio = periodo.FechaInicio,
                     FechaFin = periodo.FechaFin,
                     FechaMatriculaFin = periodo.FechaMatriculaFin,
-                    Ofertas = ofertasDisponibles
+                    Ofertas = ofertasDisponibles,
+                    MontoMatricula = ajustesOfertas?.montoMatricula ?? 100000m,
+                    MontoInfraestructura = ajustesOfertas?.montoInfraestructura ?? 15000m
                 };
             }
             catch (Exception ex)
@@ -1354,8 +1358,12 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         becaFactor = pct / 100m;
                 }
 
+                var ajustesBulk = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                decimal montoMatriculaAjuste = ajustesBulk?.montoMatricula ?? 100000m;
+                decimal montoInfraestructuraAjuste = ajustesBulk?.montoInfraestructura ?? 15000m;
+
                 decimal subtotalCursos = ofertasValidadas.Sum(x => x.oferta.Precio * (1 - becaFactor));
-                decimal montoTotal = subtotalCursos + 100000m + 15000m;
+                decimal montoTotal = subtotalCursos + montoMatriculaAjuste + montoInfraestructuraAjuste;
 
                 // Crear matrículas
                 var matriculasCreadas = new List<Matricula>();
@@ -1424,8 +1432,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         cursosList,
                         periodo.Nombre,
                         DateTime.UtcNow,
-                        100000m,
-                        15000m,
+                        montoMatriculaAjuste,
+                        montoInfraestructuraAjuste,
                         montoTotal,
                         solicitud.Financiar,
                         nombreUniversidad,

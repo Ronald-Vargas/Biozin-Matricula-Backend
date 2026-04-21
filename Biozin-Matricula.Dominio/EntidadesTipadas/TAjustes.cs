@@ -28,5 +28,9 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string? canton { get; set; }
 
         public string? distrito { get; set; }
+
+        public decimal? montoMatricula { get; set; }
+
+        public decimal? montoInfraestructura { get; set; }
     }
 }

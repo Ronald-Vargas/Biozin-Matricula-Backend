@@ -39,5 +39,11 @@ namespace Biozin_Matricula.Dominio.Entidades
         [Column("distrito ")]
         public string distrito { get; set; }
 
+        [Column("montoMatricula")]
+        public decimal? montoMatricula { get; set; }
+
+        [Column("montoInfraestructura")]
+        public decimal? montoInfraestructura { get; set; }
+
     }
 }

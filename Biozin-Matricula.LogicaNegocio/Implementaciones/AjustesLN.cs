@@ -79,6 +79,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.provincia = ajustes.provincia;
                     objDatos.ValorRetorno.canton = ajustes.canton;
                     objDatos.ValorRetorno.distrito = ajustes.distrito;
+                    objDatos.ValorRetorno.montoMatricula = ajustes.montoMatricula;
+                    objDatos.ValorRetorno.montoInfraestructura = ajustes.montoInfraestructura;
                     _unidadDeTrabajo.Ajustes.Modificar(objDatos.ValorRetorno);
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
