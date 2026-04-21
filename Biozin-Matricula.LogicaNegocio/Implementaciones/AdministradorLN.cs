@@ -53,6 +53,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                     var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
                     var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+                    var urlCampus = ajustes?.sitioWeb ?? "";
 
                     await _correo.EnviarCredencialesStaffAsync(
                         administrador.Correo,
@@ -61,7 +62,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         contrasenaTxt,
                         "Administrador",
                         nombreUniversidad,
-                        correoRemitente
+                        correoRemitente,
+                        urlCampus
                     );
                 }
                 else

@@ -113,6 +113,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                         var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
                         var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+                        var urlCampus = ajustes?.sitioWeb ?? "";
 
                         await _correo.EnviarCredencialesAsync(
                             estudiante.EmailPersonal,
@@ -121,7 +122,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                             email,
                             contrasenaTxt,
                             nombreUniversidad,
-                            correoRemitente
+                            correoRemitente,
+                            urlCampus
                         );
                     }
                     catch (Exception exCorreo)

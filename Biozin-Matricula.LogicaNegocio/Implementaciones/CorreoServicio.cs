@@ -22,7 +22,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             string correoInstitucional,
             string password,
             string nombreUniversidad,
-            string correoRemitente)
+            string correoRemitente,
+            string urlCampus)
         {
             var mensaje = new MimeMessage();
 
@@ -61,7 +62,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             html = html.Replace("{carnet}", carnet.ToString());
             html = html.Replace("{correoInstitucional}", correoInstitucional);
             html = html.Replace("{password}", password);
-            html = html.Replace("{urlCampus}", "http://localhost:4200/");
+            html = html.Replace("{urlCampus}", urlCampus);
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
             html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 
@@ -94,7 +95,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             string password,
             string rol,
             string nombreUniversidad,
-            string correoRemitente)
+            string correoRemitente,
+            string urlCampus)
         {
             var mensaje = new MimeMessage();
 
@@ -133,7 +135,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             html = html.Replace("{correoInstitucional}", correoInstitucional);
             html = html.Replace("{password}", password);
             html = html.Replace("{rol}", rol);
-            html = html.Replace("{urlCampus}", "http://localhost:4200/");
+            html = html.Replace("{urlCampus}", urlCampus);
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
             html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 
@@ -169,7 +171,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             DateTime fechaMatricula,
             decimal monto,
             string nombreUniversidad,
-            string correoRemitente)
+            string correoRemitente,
+            string urlCampus)
         {
             var mensaje = new MimeMessage();
 
@@ -206,7 +209,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             html = html.Replace("{nombrePeriodo}", nombrePeriodo);
             html = html.Replace("{fechaMatricula}", fechaMatricula.ToLocalTime().ToString("dd/MM/yyyy HH:mm"));
             html = html.Replace("{monto}", monto.ToString("N2"));
-            html = html.Replace("{urlCampus}", "http://localhost:4200/");
+            html = html.Replace("{urlCampus}", urlCampus);
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
             html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 
@@ -236,7 +239,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             decimal monto,
             DateTime fechaPago,
             string nombreUniversidad,
-            string correoRemitente)
+            string correoRemitente,
+            string urlCampus)
         {
             var mensaje = new MimeMessage();
 
@@ -273,7 +277,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             html = html.Replace("{nombrePeriodo}", nombrePeriodo);
             html = html.Replace("{monto}", monto.ToString("N2"));
             html = html.Replace("{fechaPago}", fechaPago.ToLocalTime().ToString("dd/MM/yyyy HH:mm"));
-            html = html.Replace("{urlCampus}", "http://localhost:4200/");
+            html = html.Replace("{urlCampus}", urlCampus);
             html = html.Replace("{anio}", DateTime.Now.Year.ToString());
             html = html.Replace("{nombreUniversidad}", nombreUniversidad);
 

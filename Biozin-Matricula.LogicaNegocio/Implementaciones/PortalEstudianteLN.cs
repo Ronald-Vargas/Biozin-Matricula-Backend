@@ -716,6 +716,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                     var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
                     var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+                    var urlCampus = ajustes?.sitioWeb ?? "";
 
                     await _correo.EnviarComprobanteMatriculaAsync(
                         estudiante.EmailPersonal,
@@ -727,7 +728,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         matricula.FechaMatricula,
                         oferta.Precio,
                         nombreUniversidad,
-                        correoRemitente
+                        correoRemitente,
+                        urlCampus
                     );
                 }
 
@@ -1127,6 +1129,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                     var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
                     var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"] ?? "";
+                    var urlCampus = ajustes?.sitioWeb ?? "";
 
                     await _correo.EnviarComprobantePagoAsync(
                         estudiante.EmailPersonal,
@@ -1138,7 +1141,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         pago.Monto,
                         pago.FechaPago!.Value,
                         nombreUniversidad,
-                        correoRemitente
+                        correoRemitente,
+                        urlCampus
                     );
                 }
 

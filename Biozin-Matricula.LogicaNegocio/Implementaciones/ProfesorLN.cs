@@ -68,6 +68,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
                     var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
                     var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+                    var urlCampus = ajustes?.sitioWeb ?? "";
 
                     await _correo.EnviarCredencialesStaffAsync(
                         profesor.EmailPersonal,
@@ -76,7 +77,8 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         contrasenaTxt,
                         "Profesor",
                         nombreUniversidad,
-                        correoRemitente
+                        correoRemitente,
+                        urlCampus
                     );
 
                     resultado.ValorRetorno = new TCredencialesProfesor

@@ -16,7 +16,8 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             string correoInstitucional,
             string password,
             string nombreUniversidad,
-            string correoRemitente
+            string correoRemitente,
+            string urlCampus
         );
 
         Task EnviarCredencialesStaffAsync(
@@ -26,7 +27,8 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             string password,
             string rol,
             string nombreUniversidad,
-            string correoRemitente
+            string correoRemitente,
+            string urlCampus
         );
 
         Task EnviarComprobanteMatriculaAsync(
@@ -39,7 +41,8 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             DateTime fechaMatricula,
             decimal monto,
             string nombreUniversidad,
-            string correoRemitente
+            string correoRemitente,
+            string urlCampus
         );
 
         Task EnviarComprobantePagoAsync(
@@ -52,7 +55,8 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
             decimal monto,
             DateTime fechaPago,
             string nombreUniversidad,
-            string correoRemitente
+            string correoRemitente,
+            string urlCampus
         );
 
         Task EnviarCodigoRecuperacionAsync(
