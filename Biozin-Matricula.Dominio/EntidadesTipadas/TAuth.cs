@@ -22,8 +22,7 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string Email { get; set; } = string.Empty;
         // Campos exclusivos de estudiante (null para administradores)
         public long? Carnet { get; set; }
-        public int? IdCarrera { get; set; }
-        public string? NombreCarrera { get; set; }
+        public List<TCarreraResumen>? Carreras { get; set; }
         public int? SemestreActual { get; set; }
         public bool RequiereCambioContrasena { get; set; }
     }

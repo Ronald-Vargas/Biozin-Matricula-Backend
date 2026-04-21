@@ -21,6 +21,7 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
         public IRepositorioAD<PagoMatricula> PagoMatriculas { get; private set; }
         public IRepositorioAD<Administrador> Administradores { get; private set; }
         public IRepositorioAD<LogActividad> LogActividades { get; private set; }
+        public IRepositorioAD<EstudianteCarrera> EstudianteCarreras { get; private set; }
         public UnidadTrabajoEF(MatriculaDbContext contexto)
         {
             _contexto = contexto;
@@ -38,6 +39,7 @@ namespace Biozin_Matricula.AccesoDatos.Implementaciones
             PagoMatriculas = new RepositorioAD<PagoMatricula>(contexto);
             Administradores = new RepositorioAD<Administrador>(contexto);
             LogActividades = new RepositorioAD<LogActividad>(contexto);
+            EstudianteCarreras = new RepositorioAD<EstudianteCarrera>(contexto);
         }
 
         public int Completar()

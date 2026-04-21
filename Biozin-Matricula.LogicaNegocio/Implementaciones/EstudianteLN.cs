@@ -34,10 +34,15 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<TCredencialesEstudiante>();
             try
             {
+                if (estudiante.IdsCarreras == null || estudiante.IdsCarreras.Count == 0)
+                {
+                    resultado.lpError("Error al Insertar", "Debe seleccionar al menos una carrera.");
+                    return resultado;
+                }
+
                 var objDatos = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.Cedula == estudiante.Cedula);
                 if (objDatos.ValorRetorno == null)
                 {
-                    // Generar email institucional con manejo de colisiones
                     var baseEmail = GeneradorCredenciales.GenerarBaseEmail(estudiante.Nombre, estudiante.ApellidoPaterno);
                     var email = GeneradorCredenciales.ConstruirEmailEstudiante(baseEmail);
                     int sufijo = 2;
@@ -54,7 +59,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         sufijo++;
                     }
 
-                    // Generar carnet único
                     var carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
                     const int maxIntentosCarnet = 100;
                     int intentosCarnet = 0;
@@ -68,7 +72,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         carnet = GeneradorCredenciales.GenerarCarnet(DateTime.UtcNow.Year);
                     }
 
-                    // Generar contraseña y hashear
                     var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
                     var contrasenaHash = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
 
@@ -78,8 +81,21 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     entidad.Contrasena = contrasenaHash;
                     entidad.RequiereCambioContrasena = true;
                     entidad.FechaIngreso = DateTime.UtcNow;
+                    // Mantener id_carrera con el primer valor para compatibilidad con la columna existente
+                    entidad.IdCarrera = estudiante.IdsCarreras.First();
 
                     _unidadDeTrabajo.Estudiantes.Insertar(entidad);
+                    _unidadDeTrabajo.Completar();
+
+                    // Insertar relaciones de carrera
+                    foreach (var idCarrera in estudiante.IdsCarreras.Distinct())
+                    {
+                        _unidadDeTrabajo.EstudianteCarreras.Insertar(new EstudianteCarrera
+                        {
+                            IdEstudiante = entidad.IdEstudiante,
+                            IdCarrera = idCarrera
+                        });
+                    }
                     _unidadDeTrabajo.Completar();
 
                     _log.Registrar("estudiante", $"Se registró el estudiante {estudiante.Nombre} {estudiante.ApellidoPaterno}", "👨‍🎓");
@@ -132,6 +148,12 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             var resultado = new Respuesta<int>();
             try
             {
+                if (estudiante.IdsCarreras == null || estudiante.IdsCarreras.Count == 0)
+                {
+                    resultado.lpError("Error al Modificar", "Debe seleccionar al menos una carrera.");
+                    return resultado;
+                }
+
                 var objDatos = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(y => y.IdEstudiante == estudiante.IdEstudiante);
                 if (objDatos.ValorRetorno != null)
                 {
@@ -151,7 +173,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.Canton = estudiante.Canton;
                     objDatos.ValorRetorno.Distrito = estudiante.Distrito;
                     objDatos.ValorRetorno.DireccionExacta = estudiante.DireccionExacta;
-                    objDatos.ValorRetorno.IdCarrera = estudiante.IdCarrera;
                     objDatos.ValorRetorno.SemestreActual = estudiante.SemestreActual;
                     objDatos.ValorRetorno.EstadoEstudiante = estudiante.EstadoEstudiante;
                     objDatos.ValorRetorno.TipoBeca = estudiante.TipoBeca;
@@ -165,6 +186,25 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     objDatos.ValorRetorno.NecesitaAsistencia = estudiante.NecesitaAsistencia;
                     objDatos.ValorRetorno.Observaciones = estudiante.Observaciones;
                     _unidadDeTrabajo.Estudiantes.Modificar(objDatos.ValorRetorno);
+                    _unidadDeTrabajo.Completar();
+
+                    // Sincronizar carreras: eliminar las actuales e insertar las nuevas
+                    var carrerasActuales = _unidadDeTrabajo.EstudianteCarreras
+                        .ObtenerEntidades(ec => ec.IdEstudiante == estudiante.IdEstudiante)
+                        .ValorRetorno ?? Enumerable.Empty<EstudianteCarrera>();
+
+                    foreach (var ec in carrerasActuales)
+                        _unidadDeTrabajo.EstudianteCarreras.Eliminar(ec);
+
+                    foreach (var idCarrera in estudiante.IdsCarreras.Distinct())
+                    {
+                        _unidadDeTrabajo.EstudianteCarreras.Insertar(new EstudianteCarrera
+                        {
+                            IdEstudiante = estudiante.IdEstudiante,
+                            IdCarrera = idCarrera
+                        });
+                    }
+
                     resultado.ValorRetorno = _unidadDeTrabajo.Completar();
                 }
                 else
@@ -265,11 +305,19 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
         private void EnriquecerAcademico(TEstudiante t)
         {
-            if (t.IdCarrera.HasValue)
+            // Cargar carreras desde la tabla de relación
+            var relaciones = _unidadDeTrabajo.EstudianteCarreras
+                .ObtenerEntidades(ec => ec.IdEstudiante == t.IdEstudiante)
+                .ValorRetorno ?? Enumerable.Empty<EstudianteCarrera>();
+
+            t.IdsCarreras = relaciones.Select(ec => ec.IdCarrera).ToList();
+            t.Carreras = new List<TCarreraResumen>();
+
+            foreach (var rel in relaciones)
             {
-                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == t.IdCarrera.Value).ValorRetorno;
-                t.CarreraNombre = carrera?.Nombre;
-                t.CarreraCodigo = carrera?.Codigo;
+                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == rel.IdCarrera).ValorRetorno;
+                if (carrera != null)
+                    t.Carreras.Add(new TCarreraResumen { IdCarrera = carrera.IdCarrera, Codigo = carrera.Codigo, Nombre = carrera.Nombre });
             }
 
             // Matrículas del estudiante
@@ -277,7 +325,6 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 .ObtenerEntidades(m => m.IdEstudiante == t.IdEstudiante)
                 .ValorRetorno ?? Enumerable.Empty<Biozin_Matricula.Dominio.Entidades.Matricula>();
 
-            // IDs de cursos aprobados + créditos aprobados
             var idsCursosAprobados = new HashSet<int>();
             foreach (var mat in matriculas.Where(m => m.Estado == "aprobado"))
             {
@@ -288,21 +335,24 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 if (curso != null) t.CreditosAprobados += curso.Creditos;
             }
 
-            if (!t.IdCarrera.HasValue) return;
-
-            // Cursos del plan de carrera agrupados por semestre
-            var cursosCarrera = _unidadDeTrabajo.CarreraCursos
-                .ObtenerEntidades(cc => cc.IdCarrera == t.IdCarrera.Value)
-                .ValorRetorno ?? Enumerable.Empty<Biozin_Matricula.Dominio.Entidades.CarreraCurso>();
-
-            // Créditos totales
-            foreach (var cc in cursosCarrera)
+            // Créditos totales: suma de todas las carreras (sin duplicar cursos compartidos)
+            var idsCursosContados = new HashSet<int>();
+            foreach (var idCarrera in t.IdsCarreras)
             {
-                var curso = _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == cc.IdCurso).ValorRetorno;
-                if (curso != null) t.CreditosTotales += curso.Creditos;
+                var cursosCarrera = _unidadDeTrabajo.CarreraCursos
+                    .ObtenerEntidades(cc => cc.IdCarrera == idCarrera)
+                    .ValorRetorno ?? Enumerable.Empty<Biozin_Matricula.Dominio.Entidades.CarreraCurso>();
+
+                foreach (var cc in cursosCarrera)
+                {
+                    if (idsCursosContados.Contains(cc.IdCurso)) continue;
+                    idsCursosContados.Add(cc.IdCurso);
+                    var curso = _unidadDeTrabajo.Cursos.ObtenerEntidad(c => c.IdCurso == cc.IdCurso).ValorRetorno;
+                    if (curso != null) t.CreditosTotales += curso.Creditos;
+                }
             }
 
-            // Semestre actual: cantidad de períodos distintos en los que el estudiante ha matriculado
+            // Semestre actual
             var periodosDistintos = new HashSet<int>();
             foreach (var mat in matriculas)
             {

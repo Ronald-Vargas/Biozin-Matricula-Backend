@@ -21,6 +21,7 @@ namespace Biozin_Matricula.AccesoDatos
         public DbSet<Matricula> Matriculas { get; set; }
         public DbSet<Pago> Pagos { get; set; }
         public DbSet<Administrador> Administradores { get; set; }
+        public DbSet<EstudianteCarrera> EstudianteCarreras { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -101,6 +102,22 @@ namespace Biozin_Matricula.AccesoDatos
             modelBuilder.Entity<Pago>()
                 .Property(p => p.Monto)
                 .HasColumnType("decimal(18,2)");
+
+            modelBuilder.Entity<EstudianteCarrera>()
+                .HasOne<Estudiante>()
+                .WithMany()
+                .HasForeignKey(ec => ec.IdEstudiante)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EstudianteCarrera>()
+                .HasOne(ec => ec.Carrera)
+                .WithMany()
+                .HasForeignKey(ec => ec.IdCarrera);
+
+            modelBuilder.Entity<EstudianteCarrera>()
+                .HasIndex(ec => new { ec.IdEstudiante, ec.IdCarrera })
+                .IsUnique()
+                .HasDatabaseName("UQ_estudiante_carrera");
 
             // Tabla creada manualmente — EF solo la usa para consultas, no la gestiona en migraciones
             modelBuilder.Entity<PagoMatricula>()

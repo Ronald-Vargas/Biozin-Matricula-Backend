@@ -19,7 +19,12 @@ namespace Biozin_Matricula.Dominio.DTO
             CreateMap<Carrera, TCarrera>().ReverseMap();
             CreateMap<Profesor, TProfesor>().ReverseMap();
             CreateMap<Periodo, TPeriodo>().ReverseMap();
-            CreateMap<Estudiante, TEstudiante>().ReverseMap();
+            CreateMap<Estudiante, TEstudiante>()
+                .ForMember(dest => dest.IdsCarreras, opt => opt.Ignore())
+                .ForMember(dest => dest.Carreras, opt => opt.Ignore())
+                .ReverseMap()
+                .ForMember(dest => dest.IdCarrera, opt => opt.Ignore())
+                .ForMember(dest => dest.Carrera, opt => opt.Ignore());
             CreateMap<CarreraCurso, TCarreraCurso>().ReverseMap();
             CreateMap<Ajustes, TAjustes>().ReverseMap();
             CreateMap<Aula, TAula>().ReverseMap();

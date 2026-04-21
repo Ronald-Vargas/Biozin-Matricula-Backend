@@ -13,7 +13,7 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<List<THistorialSemestre>> ObtenerHistorial(int idEstudiante);
         Task<Respuesta<List<TPagoEstudiante>>> ObtenerPagos(int idEstudiante);
         Task<Respuesta<bool>> RealizarPago(int idEstudiante, int idPago);
-        Respuesta<TMallaCurricular> ObtenerMallaCurricular(int idEstudiante);
+        Respuesta<TMallaCurricular> ObtenerMallaCurricular(int idEstudiante, int? idCarrera = null);
         Respuesta<object> CambiarContrasenaTemporaria(TCambioContrasena datos);
         Task<Respuesta<object>> SolicitarRecuperacion(string email);
     }

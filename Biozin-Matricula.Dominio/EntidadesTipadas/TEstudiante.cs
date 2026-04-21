@@ -1,5 +1,12 @@
 namespace Biozin_Matricula.Dominio.EntidadesTipadas
 {
+    public class TCarreraResumen
+    {
+        public int IdCarrera { get; set; }
+        public string Codigo { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
+    }
+
     public class TEstudiante {
         public int IdEstudiante { get; set; }
         public string Cedula { get; set; } = string.Empty;
@@ -18,7 +25,10 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         public string? Canton { get; set; }
         public string? Distrito { get; set; }
         public string? DireccionExacta { get; set; }
-        public int? IdCarrera { get; set; }
+
+        // Lista de carreras (reemplaza el antiguo IdCarrera único)
+        public List<int> IdsCarreras { get; set; } = new();
+
         public DateTime? FechaIngreso { get; set; }
         public int? SemestreActual { get; set; }
         public bool? EstadoEstudiante { get; set; }
@@ -41,7 +51,6 @@ namespace Biozin_Matricula.Dominio.EntidadesTipadas
         // Calculados dinámicamente
         public int CreditosAprobados { get; set; }
         public int CreditosTotales { get; set; }
-        public string? CarreraCodigo { get; set; }
-        public string? CarreraNombre { get; set; }
+        public List<TCarreraResumen> Carreras { get; set; } = new();
     }
 }

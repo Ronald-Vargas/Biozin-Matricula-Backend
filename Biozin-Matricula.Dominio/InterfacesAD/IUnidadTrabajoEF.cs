@@ -18,6 +18,7 @@ namespace Biozin_Matricula.Dominio.InterfacesAD
         IRepositorioAD<PagoMatricula> PagoMatriculas { get; }
         IRepositorioAD<Administrador> Administradores { get; }
         IRepositorioAD<LogActividad> LogActividades { get; }
+        IRepositorioAD<EstudianteCarrera> EstudianteCarreras { get; }
         int Completar();
     }
 }

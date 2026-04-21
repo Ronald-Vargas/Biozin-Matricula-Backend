@@ -59,9 +59,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                var carrera = estudiante.IdCarrera.HasValue
-                    ? _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == estudiante.IdCarrera.Value).ValorRetorno
-                    : null;
+                var carreras = ObtenerCarrerasResumen(estudiante.IdEstudiante);
 
                 resultado.ValorRetorno = new TPerfilEstudiante
                 {
@@ -69,8 +67,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     Nombre = estudiante.Nombre,
                     ApellidoPaterno = estudiante.ApellidoPaterno,
                     Carnet = estudiante.carnet,
-                    IdCarrera = estudiante.IdCarrera,
-                    NombreCarrera = carrera?.Nombre,
+                    Carreras = carreras,
                     SemestreActual = estudiante.SemestreActual,
                     EmailInstitucional = estudiante.EmailInstitucional,
                     RequiereCambioContrasena = estudiante.RequiereCambioContrasena
@@ -200,20 +197,22 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                var carrera = estudiante.IdCarrera.HasValue
-                    ? _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == estudiante.IdCarrera.Value).ValorRetorno
-                    : null;
+                var carreras = ObtenerCarrerasResumen(idEstudiante);
+                var idsCarreras = carreras.Select(c => c.IdCarrera).ToList();
 
-                // Créditos totales de la carrera (suma de créditos de todos sus cursos)
+                // Créditos totales: suma de todas las carreras del estudiante (sin duplicar cursos compartidos)
                 int creditosTotales = 0;
-                if (estudiante.IdCarrera.HasValue)
+                var idsCursosContados = new HashSet<int>();
+                foreach (var idCarrera in idsCarreras)
                 {
                     var cursosCarrera = _unidadDeTrabajo.CarreraCursos
-                        .ObtenerEntidades(cc => cc.IdCarrera == estudiante.IdCarrera.Value)
+                        .ObtenerEntidades(cc => cc.IdCarrera == idCarrera)
                         .ValorRetorno ?? Enumerable.Empty<CarreraCurso>();
 
                     foreach (var cc in cursosCarrera)
                     {
+                        if (idsCursosContados.Contains(cc.IdCurso)) continue;
+                        idsCursosContados.Add(cc.IdCurso);
                         var curso = _unidadDeTrabajo.Cursos
                             .ObtenerEntidad(c => c.IdCurso == cc.IdCurso)
                             .ValorRetorno;
@@ -273,8 +272,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     Nombre = estudiante.Nombre,
                     ApellidoPaterno = estudiante.ApellidoPaterno,
                     Carnet = estudiante.carnet,
-                    IdCarrera = estudiante.IdCarrera,
-                    NombreCarrera = carrera?.Nombre,
+                    Carreras = carreras,
                     SemestreActual = periodosDistintos > 0 ? periodosDistintos : estudiante.SemestreActual,
                     EmailInstitucional = estudiante.EmailInstitucional,
                     CreditosAprobados = creditosAprobados,
@@ -316,23 +314,29 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                // Carrera del estudiante
-                var estudiante = _unidadDeTrabajo.Estudiantes
-                    .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
-                    .ValorRetorno;
+                // Carreras del estudiante
+                var relacionesCarrera = _unidadDeTrabajo.EstudianteCarreras
+                    .ObtenerEntidades(ec => ec.IdEstudiante == idEstudiante)
+                    .ValorRetorno ?? Enumerable.Empty<EstudianteCarrera>();
 
-                if (estudiante?.IdCarrera == null)
+                var idsCarreras = relacionesCarrera.Select(ec => ec.IdCarrera).ToList();
+
+                if (idsCarreras.Count == 0)
                 {
                     resultado.strMensajeRespuesta = "El estudiante no tiene una carrera asignada";
                     return resultado;
                 }
 
-                // Cursos que pertenecen al plan de la carrera del estudiante
-                var cursosCarrera = _unidadDeTrabajo.CarreraCursos
-                    .ObtenerEntidades(cc => cc.IdCarrera == estudiante.IdCarrera.Value)
-                    .ValorRetorno ?? Enumerable.Empty<CarreraCurso>();
-
-                var idsCursosCarrera = cursosCarrera.Select(cc => cc.IdCurso).ToHashSet();
+                // Cursos que pertenecen al plan de CUALQUIERA de las carreras del estudiante
+                var idsCursosCarrera = new HashSet<int>();
+                foreach (var idCarrera in idsCarreras)
+                {
+                    var cursosDeCarrera = _unidadDeTrabajo.CarreraCursos
+                        .ObtenerEntidades(cc => cc.IdCarrera == idCarrera)
+                        .ValorRetorno ?? Enumerable.Empty<CarreraCurso>();
+                    foreach (var cc in cursosDeCarrera)
+                        idsCursosCarrera.Add(cc.IdCurso);
+                }
 
                 // Ofertas del período activo con cupo, limitadas a cursos de la carrera
                 var ofertas = _unidadDeTrabajo.OfertasAcademicas
@@ -512,18 +516,23 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
-                // Verificar que el curso pertenece a la carrera del estudiante
+                // Verificar que el curso pertenece a ALGUNA de las carreras del estudiante
                 var estudiante = _unidadDeTrabajo.Estudiantes
                     .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
                     .ValorRetorno;
 
-                var perteneceACarrera = estudiante?.IdCarrera != null && _unidadDeTrabajo.CarreraCursos
-                    .ObtenerEntidad(cc => cc.IdCarrera == estudiante.IdCarrera.Value && cc.IdCurso == oferta.IdCurso)
-                    .ValorRetorno != null;
+                var idsCarrerasEstudiante = _unidadDeTrabajo.EstudianteCarreras
+                    .ObtenerEntidades(ec => ec.IdEstudiante == idEstudiante)
+                    .ValorRetorno?.Select(ec => ec.IdCarrera).ToList() ?? new List<int>();
+
+                var perteneceACarrera = idsCarrerasEstudiante.Any(idCarrera =>
+                    _unidadDeTrabajo.CarreraCursos
+                        .ObtenerEntidad(cc => cc.IdCarrera == idCarrera && cc.IdCurso == oferta.IdCurso)
+                        .ValorRetorno != null);
 
                 if (!perteneceACarrera)
                 {
-                    resultado.lpError("Error", "Este curso no pertenece al plan de estudios de tu carrera");
+                    resultado.lpError("Error", "Este curso no pertenece al plan de estudios de ninguna de tus carreras");
                     return resultado;
                 }
 
@@ -1171,7 +1180,11 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     .ObtenerEntidad(e => e.IdEstudiante == idEstudiante)
                     .ValorRetorno;
 
-                if (estudiante?.IdCarrera == null)
+                var idsCarrerasEstudianteBulk = _unidadDeTrabajo.EstudianteCarreras
+                    .ObtenerEntidades(ec => ec.IdEstudiante == idEstudiante)
+                    .ValorRetorno?.Select(ec => ec.IdCarrera).ToList() ?? new List<int>();
+
+                if (idsCarrerasEstudianteBulk.Count == 0)
                 {
                     resultado.lpError("Error", "El estudiante no tiene una carrera asignada");
                     return resultado;
@@ -1248,13 +1261,14 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                         return resultado;
                     }
 
-                    var perteneceACarrera = _unidadDeTrabajo.CarreraCursos
-                        .ObtenerEntidad(cc => cc.IdCarrera == estudiante.IdCarrera.Value && cc.IdCurso == oferta.IdCurso)
-                        .ValorRetorno != null;
+                    var perteneceACarrera = idsCarrerasEstudianteBulk.Any(idCarrera =>
+                        _unidadDeTrabajo.CarreraCursos
+                            .ObtenerEntidad(cc => cc.IdCarrera == idCarrera && cc.IdCurso == oferta.IdCurso)
+                            .ValorRetorno != null);
 
                     if (!perteneceACarrera)
                     {
-                        resultado.lpError("Error", "Un curso seleccionado no pertenece al plan de estudios de tu carrera");
+                        resultado.lpError("Error", "Un curso seleccionado no pertenece al plan de estudios de ninguna de tus carreras");
                         return resultado;
                     }
 
@@ -1430,19 +1444,28 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
-        public Respuesta<TMallaCurricular> ObtenerMallaCurricular(int idEstudiante)
+        public Respuesta<TMallaCurricular> ObtenerMallaCurricular(int idEstudiante, int? idCarrera = null)
         {
             var resultado = new Respuesta<TMallaCurricular>();
             try
             {
-                var estudiante = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(e => e.IdEstudiante == idEstudiante).ValorRetorno;
-                if (estudiante == null || !estudiante.IdCarrera.HasValue)
+                var relaciones = _unidadDeTrabajo.EstudianteCarreras
+                    .ObtenerEntidades(ec => ec.IdEstudiante == idEstudiante)
+                    .ValorRetorno ?? Enumerable.Empty<EstudianteCarrera>();
+
+                var idsCarreras = relaciones.Select(ec => ec.IdCarrera).ToList();
+                if (idsCarreras.Count == 0)
                 {
                     resultado.lpError("Sin carrera", "El estudiante no tiene una carrera asignada.");
                     return resultado;
                 }
 
-                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == estudiante.IdCarrera.Value).ValorRetorno;
+                // Si se pasa idCarrera, validar que pertenezca al estudiante; si no, usar la primera
+                int idCarreraEfectiva = idCarrera.HasValue && idsCarreras.Contains(idCarrera.Value)
+                    ? idCarrera.Value
+                    : idsCarreras[0];
+
+                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == idCarreraEfectiva).ValorRetorno;
                 if (carrera == null)
                 {
                     resultado.lpError("No encontrado", "No se encontró la carrera del estudiante.");
@@ -1551,6 +1574,22 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                 resultado.lpError("Error", ex.Message);
             }
             return resultado;
+        }
+
+        private List<TCarreraResumen> ObtenerCarrerasResumen(int idEstudiante)
+        {
+            var relaciones = _unidadDeTrabajo.EstudianteCarreras
+                .ObtenerEntidades(ec => ec.IdEstudiante == idEstudiante)
+                .ValorRetorno ?? Enumerable.Empty<EstudianteCarrera>();
+
+            var lista = new List<TCarreraResumen>();
+            foreach (var rel in relaciones)
+            {
+                var carrera = _unidadDeTrabajo.Carreras.ObtenerEntidad(c => c.IdCarrera == rel.IdCarrera).ValorRetorno;
+                if (carrera != null)
+                    lista.Add(new TCarreraResumen { IdCarrera = carrera.IdCarrera, Codigo = carrera.Codigo, Nombre = carrera.Nombre });
+            }
+            return lista;
         }
 
         private static bool HayChoqueHorario(List<TDiaHorario> a, List<TDiaHorario> b)

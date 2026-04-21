@@ -96,13 +96,13 @@ namespace Biozin_Matricula.API.Controladores
 
 
         [HttpGet("MallaCurricular")]
-        public IActionResult ObtenerMallaCurricular()
+        public IActionResult ObtenerMallaCurricular([FromQuery] int? idCarrera = null)
         {
             var idEstudiante = ObtenerIdEstudiante();
             if (idEstudiante == 0)
                 return Unauthorized();
 
-            return Ok(_ln.ObtenerMallaCurricular(idEstudiante));
+            return Ok(_ln.ObtenerMallaCurricular(idEstudiante, idCarrera));
         }
 
         [HttpGet("Historial")]

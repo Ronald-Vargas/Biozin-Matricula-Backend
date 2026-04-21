@@ -123,8 +123,7 @@ namespace Biozin_Matricula.API.Controladores
                     Nombre = $"{perfil.Nombre} {perfil.ApellidoPaterno}",
                     Email = perfil.EmailInstitucional ?? "",
                     Carnet = perfil.Carnet,
-                    IdCarrera = perfil.IdCarrera,
-                    NombreCarrera = perfil.NombreCarrera,
+                    Carreras = perfil.Carreras,
                     SemestreActual = perfil.SemestreActual,
                     RequiereCambioContrasena = perfil.RequiereCambioContrasena
                 }
