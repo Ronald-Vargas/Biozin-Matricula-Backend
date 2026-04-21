@@ -16,7 +16,24 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers()
     .AddJsonOptions(opt =>
-        opt.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase);
+        opt.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase)
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errores = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .SelectMany(e => e.Value!.Errors.Select(x => x.ErrorMessage))
+                .ToList();
+            var mensaje = errores.Count > 0 ? string.Join(" | ", errores) : "El cuerpo de la solicitud contiene datos inválidos o mal formados.";
+            return new Microsoft.AspNetCore.Mvc.BadRequestObjectResult(new
+            {
+                blnError = true,
+                strTituloRespuesta = "Solicitud inválida",
+                strMensajeRespuesta = mensaje
+            });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

@@ -73,7 +73,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
             await smtp.ConnectAsync(
                 _config["Mail:Smtp"],
-                int.Parse(_config["Mail:Puerto"]),
+                (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587),
                 MailKit.Security.SecureSocketOptions.StartTls
             );
 
@@ -145,7 +145,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
             await smtp.ConnectAsync(
                 _config["Mail:Smtp"],
-                int.Parse(_config["Mail:Puerto"]),
+                (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587),
                 MailKit.Security.SecureSocketOptions.StartTls
             );
 
@@ -217,7 +217,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
             await smtp.ConnectAsync(
                 _config["Mail:Smtp"],
-                int.Parse(_config["Mail:Puerto"]),
+                (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587),
                 MailKit.Security.SecureSocketOptions.StartTls
             );
 
@@ -284,7 +284,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
             await smtp.ConnectAsync(
                 _config["Mail:Smtp"],
-                int.Parse(_config["Mail:Puerto"]),
+                (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587),
                 MailKit.Security.SecureSocketOptions.StartTls
             );
 
@@ -376,7 +376,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             mensaje.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_config["Mail:Smtp"], int.Parse(_config["Mail:Puerto"]), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.ConnectAsync(_config["Mail:Smtp"], (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587), MailKit.Security.SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
             await smtp.SendAsync(mensaje);
             await smtp.DisconnectAsync(true);
@@ -412,7 +412,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(
                 _config["Mail:Smtp"],
-                int.Parse(_config["Mail:Puerto"]),
+                (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587),
                 MailKit.Security.SecureSocketOptions.StartTls
             );
             await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
@@ -491,7 +491,7 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             mensaje.Body = builder.ToMessageBody();
 
             using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_config["Mail:Smtp"], int.Parse(_config["Mail:Puerto"]), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.ConnectAsync(_config["Mail:Smtp"], (int.TryParse(_config["Mail:Puerto"], out var smtpPuerto) ? smtpPuerto : 587), MailKit.Security.SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(_config["Mail:Usuario"], _config["Mail:Password"]);
             await smtp.SendAsync(mensaje);
             await smtp.DisconnectAsync(true);

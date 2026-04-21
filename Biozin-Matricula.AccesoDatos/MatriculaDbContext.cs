@@ -119,7 +119,6 @@ namespace Biozin_Matricula.AccesoDatos
                 .IsUnique()
                 .HasDatabaseName("UQ_estudiante_carrera");
 
-            // Tabla creada manualmente — EF solo la usa para consultas, no la gestiona en migraciones
             modelBuilder.Entity<PagoMatricula>()
                 .ToTable("pago_matriculas")
                 .HasKey(pm => pm.IdPagoMatricula);
