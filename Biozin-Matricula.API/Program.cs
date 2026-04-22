@@ -98,7 +98,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                  "http://biozinmatricula.online",
+                  "http://www.biozinmatricula.online",
+                  "https://biozinmatricula.online",
+                  "https://www.biozinmatricula.online"
+              )
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
