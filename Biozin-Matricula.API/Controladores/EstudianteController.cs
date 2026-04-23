@@ -12,7 +12,12 @@ namespace Biozin_Matricula.API.Controladores
     {
 
         private readonly IEstudianteLN _ln;
-        public EstudianteController(IEstudianteLN ln) => _ln = ln;
+        private readonly IPortalEstudianteLN _portalLN;
+        public EstudianteController(IEstudianteLN ln, IPortalEstudianteLN portalLN)
+        {
+            _ln = ln;
+            _portalLN = portalLN;
+        }
 
         [HttpPost("Insertar")]
         public async Task<IActionResult> Insertar([FromBody] TEstudiante obj) => Ok(await _ln.Insertar(obj));
@@ -32,8 +37,8 @@ namespace Biozin_Matricula.API.Controladores
         [HttpGet("Listar")]
         public IActionResult Listar() => Ok(_ln.Listar());
 
-
-
-
+        [HttpGet("MallaCurricular/{idEstudiante}")]
+        public IActionResult ObtenerMalla(int idEstudiante, [FromQuery] int? idCarrera = null)
+            => Ok(_portalLN.ObtenerMallaCurricular(idEstudiante, idCarrera));
     }
 }
