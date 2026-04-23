@@ -32,5 +32,8 @@ namespace Biozin_Matricula.API.Controladores
         [HttpGet("Listar")]
         public IActionResult Listar() => Ok(_ln.Listar());
 
+        [HttpPost("ReenviarCredenciales/{id}")]
+        public async Task<IActionResult> ReenviarCredenciales(int id)
+            => Ok(await _ln.ReenviarCredenciales(id));
     }
 }

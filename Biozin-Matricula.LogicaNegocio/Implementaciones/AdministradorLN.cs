@@ -87,6 +87,50 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
 
 
 
+        public async Task<Respuesta<object>> ReenviarCredenciales(int idAdministrador)
+        {
+            var resultado = new Respuesta<object>();
+            try
+            {
+                var entidad = _unidadDeTrabajo.Administradores.ObtenerEntidad(a => a.IdAdministrador == idAdministrador).ValorRetorno;
+                if (entidad == null)
+                {
+                    resultado.lpError("No encontrado", "El administrador no existe.");
+                    return resultado;
+                }
+
+                var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
+                entidad.Contraseña = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
+                entidad.RequiereCambioContrasena = true;
+                _unidadDeTrabajo.Administradores.Modificar(entidad);
+                _unidadDeTrabajo.Completar();
+
+                var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+                var urlCampus = ajustes?.sitioWeb ?? "";
+
+                await _correo.EnviarCredencialesStaffAsync(
+                    entidad.Correo,
+                    entidad.NombreCompleto,
+                    entidad.EmailInstitucional,
+                    contrasenaTxt,
+                    "Administrador",
+                    nombreUniversidad,
+                    correoRemitente,
+                    urlCampus
+                );
+
+                resultado.strMensajeRespuesta = "Credenciales reenviadas correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error ReenviarCredenciales Administrador: {0}", ex.Message);
+                resultado.lpError("Error al reenviar credenciales", ex.Message);
+            }
+            return resultado;
+        }
+
         public Respuesta<int> Modificar(TAdministrador administrador)
         {
             var resultado = new Respuesta<int>();

@@ -145,6 +145,50 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
             return resultado;
         }
 
+        public async Task<Respuesta<object>> ReenviarCredenciales(int idEstudiante)
+        {
+            var resultado = new Respuesta<object>();
+            try
+            {
+                var entidad = _unidadDeTrabajo.Estudiantes.ObtenerEntidad(e => e.IdEstudiante == idEstudiante).ValorRetorno;
+                if (entidad == null)
+                {
+                    resultado.lpError("No encontrado", "El estudiante no existe.");
+                    return resultado;
+                }
+
+                var contrasenaTxt = GeneradorCredenciales.GenerarContrasena();
+                entidad.Contrasena = BCrypt.Net.BCrypt.HashPassword(contrasenaTxt);
+                entidad.RequiereCambioContrasena = true;
+                _unidadDeTrabajo.Estudiantes.Modificar(entidad);
+                _unidadDeTrabajo.Completar();
+
+                var ajustes = _unidadDeTrabajo.Ajustes.Listar().ValorRetorno?.FirstOrDefault();
+                var nombreUniversidad = ajustes?.nombreUniversidad ?? "Universidad";
+                var correoRemitente = ajustes?.correoInstitucional ?? _config["Mail:Remitente"];
+                var urlCampus = ajustes?.sitioWeb ?? "";
+
+                await _correo.EnviarCredencialesAsync(
+                    entidad.EmailPersonal,
+                    entidad.Nombre,
+                    entidad.carnet,
+                    entidad.EmailInstitucional,
+                    contrasenaTxt,
+                    nombreUniversidad,
+                    correoRemitente,
+                    urlCampus
+                );
+
+                resultado.strMensajeRespuesta = "Credenciales reenviadas correctamente.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error ReenviarCredenciales Estudiante: {0}", ex.Message);
+                resultado.lpError("Error al reenviar credenciales", ex.Message);
+            }
+            return resultado;
+        }
+
         public Respuesta<int> Modificar(TEstudiante estudiante)
         {
             var resultado = new Respuesta<int>();

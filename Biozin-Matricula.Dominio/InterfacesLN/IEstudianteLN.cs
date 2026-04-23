@@ -11,5 +11,6 @@ namespace Biozin_Matricula.Dominio.InterfacesLN
         Respuesta<IEnumerable<TEstudiante>> Obtener(TEstudiante estudiante);
         Respuesta<TEstudiante> Buscar(TEstudiante estudiante);
         Respuesta<IEnumerable<TEstudiante>> Listar();
+        Task<Respuesta<object>> ReenviarCredenciales(int idEstudiante);
     }
 }

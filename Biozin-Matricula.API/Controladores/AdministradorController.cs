@@ -40,5 +40,9 @@ namespace Biozin_Matricula.API.Controladores
 
         [HttpGet("ActividadReciente")]
         public IActionResult ActividadReciente() => Ok(_log.ObtenerRecientes(20));
+
+        [HttpPost("ReenviarCredenciales/{id}")]
+        public async Task<IActionResult> ReenviarCredenciales(int id)
+            => Ok(await _ln.ReenviarCredenciales(id));
     }
 }

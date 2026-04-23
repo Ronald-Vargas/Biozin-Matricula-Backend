@@ -44,5 +44,9 @@ namespace Biozin_Matricula.API.Controladores
         [HttpGet("Historial/{idEstudiante}")]
         public IActionResult ObtenerHistorial(int idEstudiante)
             => Ok(_portalLN.ObtenerHistorial(idEstudiante));
+
+        [HttpPost("ReenviarCredenciales/{id}")]
+        public async Task<IActionResult> ReenviarCredenciales(int id)
+            => Ok(await _ln.ReenviarCredenciales(id));
     }
 }
