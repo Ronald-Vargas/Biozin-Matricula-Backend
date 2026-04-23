@@ -59,6 +59,12 @@ namespace Biozin_Matricula.LogicaNegocio.Implementaciones
                     return resultado;
                 }
 
+                if (estudiante.EstadoEstudiante == false)
+                {
+                    resultado.lpError("Cuenta inactiva", "Su cuenta ha sido desactivada. Contacte al administrador.");
+                    return resultado;
+                }
+
                 var carreras = ObtenerCarrerasResumen(estudiante.IdEstudiante);
 
                 resultado.ValorRetorno = new TPerfilEstudiante

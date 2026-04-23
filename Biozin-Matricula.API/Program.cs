@@ -102,7 +102,9 @@ builder.Services.AddCors(options =>
                   "http://biozinmatricula.online",
                   "http://www.biozinmatricula.online",
                   "https://biozinmatricula.online",
-                  "https://www.biozinmatricula.online"
+                  "https://www.biozinmatricula.online",
+                  "http://localhost:4200",
+                  "https://localhost:4200"
               )
               .AllowAnyMethod()
               .AllowAnyHeader();
